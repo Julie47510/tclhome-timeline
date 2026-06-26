@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TCL Home Paris — Build & Dispute Timeline</title>
+<style>
+  :root{
+    --ink:#1b1b1b; --paper:#faf9f7; --card:#ffffff;
+    --hair:#e6e4e0; --hair-strong:#d8d5d0; --muted:#6f6c66; --faint:#9a968f;
+    --red:#C8102E; --oxblood:#7a1020;
+    --c-selection:#8a8a8a; --c-contract:#3f5d6b; --c-schedule:#1b1b1b;
+    --c-quote:#7a6a3f; --c-payment:#C8102E; --c-approval:#4f6b52;
+    --c-issue:#b06a2c; --c-delivery:#2f7d4f; --c-dispute:#7a1020;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px;margin:0 auto;padding:0 28px 96px;}
+
+  header.top{padding:46px 0 0;position:relative;}
+  .mark{position:absolute;top:44px;right:0;height:30px;width:auto;display:block;}
+  .eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--red);font-weight:700;margin:0 0 14px;}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(34px,6vw,54px);line-height:1.04;letter-spacing:-.01em;margin:0 0 10px;}
+  .sub{font-size:16px;color:var(--muted);max-width:54ch;margin:0 0 30px;}
+  .sub b{color:var(--ink);font-weight:600;}
+
+  .summary{border-top:1px solid var(--hair-strong);border-bottom:1px solid var(--hair-strong);padding:22px 0;margin:0 0 8px;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;}
+  .stat .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:5px;}
+  .stat .v{font-family:var(--serif);font-size:19px;line-height:1.15;}
+  .stat .v span{display:block;font-family:var(--sans);font-size:11px;color:var(--muted);letter-spacing:0;margin-top:2px;}
+  .stat .v.red{color:var(--red);} .stat .v.ox{color:var(--oxblood);}
+
+  .slip{margin:26px 0 4px;padding:22px 24px 24px;background:var(--card);border:1px solid var(--hair);border-radius:3px;}
+  .slip h3{margin:0 0 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .rail{position:relative;height:104px;margin:0 8px;}
+  .rail .axis{position:absolute;left:0;right:0;top:70px;height:1px;background:var(--hair-strong);}
+  .rail .seg{position:absolute;top:67px;height:6px;border-radius:3px;}
+  .rail .planned{background:repeating-linear-gradient(90deg,var(--faint) 0 5px,transparent 5px 9px);}
+  .rail .actual{background:var(--red);opacity:.9;}
+  .rail .mk{position:absolute;top:6px;transform:translateX(-50%);text-align:center;white-space:nowrap;}
+  .rail .mk .date{font-family:var(--serif);font-size:18px;font-weight:600;line-height:1;}
+  .rail .mk .desc{font-size:10.5px;color:var(--muted);margin-top:3px;letter-spacing:.02em;}
+  .rail .mk .tick{position:absolute;left:50%;top:42px;width:1px;height:28px;background:var(--ink);transform:translateX(-50%);}
+  .rail .mk.alt .tick{background:var(--red);}
+  .rail .gap{position:absolute;top:84px;font-size:10.5px;color:var(--red);font-weight:600;letter-spacing:.04em;}
+  .slip .legend{display:flex;gap:24px;margin-top:6px;font-size:11.5px;color:var(--muted);flex-wrap:wrap;}
+  .slip .legend i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-right:7px;vertical-align:middle;}
+  .slip .note{margin-top:14px;font-size:12.5px;color:var(--muted);max-width:80ch;}
+  .slip .note b{color:var(--red);}
+
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:38px 0 6px;position:sticky;top:0;background:var(--paper);padding:14px 0;z-index:5;border-bottom:1px solid var(--hair);}
+  .chip{font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--hair-strong);border-radius:40px;padding:6px 14px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip:hover{border-color:var(--ink);color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .chip[data-cat="all"][aria-pressed="true"]{background:var(--red);border-color:var(--red);}
+  .chip[data-cat="dispute"][aria-pressed="true"]{background:var(--oxblood);border-color:var(--oxblood);}
+
+  .phase{margin:48px 0 8px;}
+  .phase .ph{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:-.01em;}
+  .phase .psub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .phase .rule{height:2px;background:var(--ink);margin-top:12px;}
+  .phase.dispute .rule{background:var(--oxblood);} .phase.dispute .ph{color:var(--oxblood);}
+
+  .ledger{margin:20px 0 6px;border:1px solid rgba(122,16,32,.25);border-left:3px solid var(--oxblood);background:rgba(122,16,32,.035);border-radius:3px;padding:20px 22px;}
+  .ledger h4{margin:0 0 6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--oxblood);font-weight:700;}
+  .ledger .cap{font-size:12px;color:var(--muted);margin:0 0 14px;}
+  .ledger .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 26px;}
+  .ledger .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted var(--hair-strong);padding-bottom:7px;font-size:13px;}
+  .ledger .row .lab{color:var(--muted);} .ledger .row .lab b{color:var(--ink);font-weight:600;}
+  .ledger .row .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .ledger .row .num.up{color:var(--oxblood);} .ledger .row .num.up::before{content:"▲ ";font-size:9px;}
+  .ledger .claim{margin-top:16px;display:flex;flex-wrap:wrap;gap:12px 30px;align-items:baseline;}
+  .ledger .claim .big{font-family:var(--serif);font-size:25px;color:var(--oxblood);font-weight:600;}
+  .ledger .claim .big small{font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:400;}
+  .ledger .claim .lab2{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+  .ledger .claim .ctr{font-family:var(--serif);font-size:18px;color:var(--ink);}
+  .ledger ul{margin:16px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.7;}
+  .ledger ul b{color:var(--ink);font-weight:600;}
+
+  .reqlog{margin:14px 0 6px;border:1px solid var(--hair);border-left:3px solid var(--c-issue);background:#fff;border-radius:3px;padding:20px 22px;}
+  .reqlog h4{margin:0 0 4px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--c-issue);font-weight:700;}
+  .reqlog .cap{font-size:12px;color:var(--muted);margin:0 0 14px;}
+  .reqlog ol{margin:0;padding:0;list-style:none;}
+  .reqlog li{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:7px 0;border-bottom:1px dotted var(--hair-strong);font-size:13px;align-items:baseline;}
+  .reqlog li:last-child{border-bottom:none;}
+  .reqlog .rd{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .reqlog .rt{color:var(--muted);} .reqlog .rt b{color:var(--ink);font-weight:600;}
+  .reqlog .out{margin-top:12px;font-size:12.5px;color:var(--oxblood);font-weight:600;}
+
+  .monthsep{display:flex;align-items:baseline;gap:14px;margin:30px 0 12px;}
+  .monthsep .m{font-family:var(--serif);font-size:15px;color:var(--ink);font-weight:600;letter-spacing:.02em;}
+  .monthsep .line{flex:1;height:1px;background:var(--hair);}
+
+  .item{display:grid;grid-template-columns:84px 1fr;position:relative;}
+  .item .when{padding:18px 18px 18px 0;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.3;}
+  .item .when b{display:block;font-family:var(--serif);font-size:19px;color:var(--ink);font-weight:600;}
+  .item .when i{font-style:normal;font-size:10.5px;color:var(--faint);}
+  .item .body{position:relative;padding:18px 0 18px 28px;border-left:1px solid var(--hair);}
+  .item .node{position:absolute;left:-5px;top:24px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--c-selection);}
+  .item .cat{font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin-bottom:5px;display:inline-block;}
+  .item h4{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.25;margin:0 0 4px;letter-spacing:-.005em;}
+  .item p{margin:0;font-size:13.5px;color:var(--muted);max-width:66ch;}
+  .item .meta{margin-top:9px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .amount{font-weight:700;font-size:12.5px;color:var(--red);border:1px solid rgba(200,16,46,.28);background:rgba(200,16,46,.05);padding:2px 9px;border-radius:3px;}
+  .amount.ox{color:var(--oxblood);border-color:rgba(122,16,32,.3);background:rgba(122,16,32,.05);}
+  .freq{font-size:11px;color:var(--oxblood);background:rgba(122,16,32,.06);border-radius:3px;padding:2px 8px;font-weight:600;}
+  .doc{font-size:11px;color:var(--faint);font-style:italic;}
+  .item.key h4::after{content:"★";color:var(--red);font-size:12px;margin-left:8px;}
+  .item.dispute.key h4::after{color:var(--oxblood);}
+  .item.missed .node{border-color:var(--c-issue);}
+  .item.dimmed{opacity:.16;}
+
+  footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--hair-strong);font-size:12px;color:var(--faint);line-height:1.7;}
+  footer b{color:var(--muted);font-weight:600;}
+
+  @media (max-width:600px){
+    .wrap{padding:0 18px 64px;}
+    .summary{grid-template-columns:repeat(2,1fr);gap:18px 16px;}
+    .mark{top:30px;height:24px;} header.top{padding-top:30px;}
+    .item{grid-template-columns:64px 1fr;}
+    .item .when{padding-right:12px;} .item .body{padding-left:22px;}
+    .ledger .grid{grid-template-columns:1fr;}
+    .reqlog li{grid-template-columns:80px 1fr;gap:10px;}
+    .rail .mk .desc{font-size:9.5px;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <img class="mark" src="data:image/png;base64,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" alt="TCL" width="288" height="90">
+    <p class="eyebrow">Project Chronicle · 2024–2026</p>
+    <h1>TCL Home Paris</h1>
+    <p class="sub">Reconstruction of a private house into a brand showroom at <b>4 rue Delahaye, Issy-les-Moulineaux</b> — from agency sourcing through handover and into the contractual dispute, reconstructed from the project email thread.</p>
+
+    <div class="summary">
+      <div class="stat"><div class="k">Contractor</div><div class="v">Unchained<span>ex-Unexpected</span></div></div>
+      <div class="stat"><div class="k">Original opening</div><div class="v">26 Mar<span>2025 target</span></div></div>
+      <div class="stat"><div class="k">Delivered</div><div class="v red">28 May<span>2025 · +63 days</span></div></div>
+      <div class="stat"><div class="k">Disputed claim</div><div class="v ox">€44,115<span>excl. VAT</span></div></div>
+      <div class="stat"><div class="k">Status</div><div class="v ox">Summons<span>Jun 2026 · in law</span></div></div>
+    </div>
+
+    <div class="slip">
+      <h3>Planned vs. actual</h3>
+      <div class="rail" aria-label="Planned opening 26 March versus actual delivery 28 May, a 63-day overrun">
+        <div class="seg planned" style="left:0;width:27%"></div>
+        <div class="seg actual" style="left:27%;width:56%"></div>
+        <div class="axis"></div>
+        <div class="mk" style="left:27%"><div class="date">26 Mar</div><div class="desc">planned opening (v1 schedule)</div><div class="tick"></div></div>
+        <div class="mk alt" style="left:83%"><div class="date">28 May</div><div class="desc">actual handover</div><div class="tick"></div></div>
+        <div class="gap" style="left:34%">+63 days overrun →</div>
+      </div>
+      <div class="legend">
+        <span><i style="background:repeating-linear-gradient(90deg,var(--faint) 0 5px,transparent 5px 9px)"></i>Schedule as first agreed (12 Feb)</span>
+        <span><i style="background:var(--red);opacity:.9"></i>Overrun to actual handover</span>
+      </div>
+      <p class="note">The end date was formally revised to <b>23 May</b> in the V2 retro-planning (29 Apr), after the site was halted over budget and <b>~€37k of unforeseen "non prévisible" works</b> were discovered. Delivery landed 28 May.</p>
+    </div>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="Filter milestones by type"></nav>
+
+  <div id="timeline"></div>
+
+  <footer>
+    <b>Source.</b> Reconstructed from 282 emails (Oct 2024 – Jun 2026) and the attached quotations, invoices, payment advices and retro-planning files. Line-item figures are shown excl. VAT (HT), as in the quotes. The agency's final claim of €52,937.56 incl. VAT is shown here as €44,114.63 excl. VAT (20% French VAT).<br>
+    <b>Perspective.</b> This chronicle is built from TCL's mailbox, so the dispute entries state TCL's position. Unchained contests it and has issued a summons for the unpaid invoices; the matter is with lawyers as of June 2026.<br>
+    <b>Logo.</b> Official TCL logo, top-right (white background removed for clean placement; the mark itself is unaltered).
+  </footer>
+
+</div>
+
+<script>
+const CATS = {
+  selection:{label:"Sourcing & selection", color:"var(--c-selection)"},
+  contract :{label:"Contract & legal",      color:"var(--c-contract)"},
+  schedule :{label:"Schedule & deadlines",  color:"var(--c-schedule)"},
+  quote    :{label:"Quotations",            color:"var(--c-quote)"},
+  payment  :{label:"Invoices & payments",   color:"var(--c-payment)"},
+  approval :{label:"Approvals",             color:"var(--c-approval)"},
+  issue    :{label:"Build issues",          color:"var(--c-issue)"},
+  delivery :{label:"Delivery",              color:"var(--c-delivery)"},
+  dispute  :{label:"Dispute & pricing",     color:"var(--c-dispute)"},
+};
+
+const M = [
+  // ---------- BUILD ----------
+  {d:"2024-10-24", cat:"selection", t:"Concept brief & agency sourcing begins", x:"The TCL House Paris brief goes out to candidate agencies (Unexpected/Unchained, Holo, Seven, We Event) to develop showroom concepts for the building."},
+  {d:"2024-11-29", cat:"selection", t:"Project kick-off — Week 1", x:"Weekly reporting starts; the 4 rue Delahaye site is confirmed and the cross-functional team is set up."},
+  {d:"2024-12-13", cat:"contract", t:"Contract wording started", x:"After a three-party meeting, Legal begins drafting the contract; signature is planned for the following week."},
+  {d:"2024-12-20", cat:"selection", t:"Supplier shortlist drawn up", x:"The Week 4 report includes the shortlist of contractors for the reconstruction."},
+  {d:"2025-01-06", cat:"selection", t:"Scoring criteria agreed", x:"A supplier-assessment template and scoring grid is issued ahead of the first selection discussion."},
+  {d:"2025-01-27", cat:"selection", key:true, t:"Contractor selected — Unchained", x:"The final selection result is communicated internally and the agencies are informed. Unchained (the former Unexpected) wins the work."},
+  {d:"2025-01-28", cat:"contract", t:"Agency accepts the assignment", x:"Luc Haté (CEO, Unchained) confirms acceptance of the proposed scope."},
+  {d:"2025-02-11", cat:"contract", t:"Framework agreement circulated", x:"The contract template / framework agreement is shared for review."},
+  {d:"2025-02-12", cat:"schedule", key:true, t:"First schedule issued — opening set for 26 March", x:"Retro-planning v1 lays out the whole job: TCL validation by 25 Feb, production from 26 Feb, equipment install 24 Mar, opening 26 Mar 2025. This is the first agreed deadline against which the slip is measured.", doc:"TCL HOME Retroplanning.pdf"},
+  {d:"2025-02-18", cat:"approval", t:"AC swap raised — Samsung → TCL", x:"Replacing the building's existing Samsung air-con with TCL units is requested. This decision later drives extra wall/partition work — and some of the charges TCL goes on to contest."},
+  {d:"2025-02-20", cat:"contract", key:true, t:"Letter of Intent (LOI) signed", x:"The LOI is signed and a kick-off meeting is held with Julie, Lisa and Jakub."},
+  {d:"2025-02-24", cat:"approval", t:"Demolition & construction plans issued", x:"The ground-floor demolition and construction plan is finalised, clearing the way for production to start."},
+  {d:"2025-02-26", cat:"quote", key:true, t:"First quotation — €47,179.80 excl. VAT", x:"Devis D-2025-16: agency/design fees of €24,000 (creative director, consulting director, architect, project management) plus site set-up and demolition (€23,179.80). Payment terms: 50% deposit on signing the quote, balance on completion.", amount:"€47,179.80 HT", doc:"Devis D-2025-16"},
+  {d:"2025-02-26", cat:"payment", key:true, t:"First invoice — 50% deposit on signature", x:"Invoice F-2025-022632 is issued on the same terms; the balance falls due at the end of the job.", amount:"50% deposit", doc:"Facture F-2025-022632"},
+  {d:"2025-02-26", cat:"schedule", t:"Production starts — demolition begins", x:"Dismantling, demolition and construction begin on the ground floor, on schedule."},
+  {d:"2025-03-07", cat:"approval", t:"TCL air-con product list validated", x:"The list of TCL AC units to install is confirmed, following the Samsung-to-TCL swap."},
+  {d:"2025-03-13", cat:"approval", t:"AC layout proposal agreed", x:"Unit positions and the air-con layout are proposed and reviewed for the ground floor."},
+  {d:"2025-03-18", cat:"approval", t:"Design projections validated (01–04)", x:"Successive 3D space projections for the ground floor are reviewed and signed off through March."},
+  {d:"2025-03-19", cat:"issue", t:"Flooring problem flagged", x:"A flooring specification/approval issue is raised, forcing the floor plan to be reworked."},
+  {d:"2025-03-26", cat:"issue", missed:true, key:true, t:"Original 26 March opening passes — build still underway", x:"The first agreed opening date arrives with the showroom unfinished. Construction, design approvals and the first budget tensions all continue past it."},
+  {d:"2025-04-14", cat:"issue", t:"First consolidated budget — V5", x:"Unchained issues BUDGET TCL V5, its first full cost roll-up across all floors — the document that exposes how far costs have grown.", doc:"BUDGET TCL V5 Unchained.pdf"},
+  {d:"2025-04-15", cat:"dispute", key:true, t:"Detail request #1 — itemised list of all unplanned work", x:"Lisa asks Unchained to deliver a separate, detailed cost list covering every piece of unplanned construction that TCL never requested, so the extra charges can be checked before the budget meeting. This is the first formal demand for a breakdown.", freq:"request 1 of 11"},
+  {d:"2025-04-16", cat:"dispute", t:"Detail request #2 — flooring costs", x:"Julie asks for the flooring ('sol') budget first thing the next morning to close the figure. Unchained returns the detail for the 'subsequent requests' and 'on-site surprises' already started or finished — but not the full itemisation.", freq:"request 2 of 11"},
+  {d:"2025-04-22", cat:"issue", key:true, t:"Budget overrun flagged — unforeseen site costs", x:"A budget review sets a €300k cap for the whole showroom plus a separate ~€37k envelope for 'non prévisible' works tied to defects in the old building. TCL pushes to bring the core figure back toward €250k.", amount:"≈ €37k unforeseen"},
+  {d:"2025-04-25", cat:"dispute", key:true, t:"Detail request #3 — hours, labour, m², materials + pricing contested", x:"Before the negotiation meeting, Lisa insists on the detailed budget 'as precisely requested' for every line item — number of hours, man-hours/labour, square metres, raw-material quantities. The same email challenges specific prices as unreasonable: €3,200 to set up the site for ~100 m² (vs €4,706 for her 1,200 m² office); ~€4,000 for a water-heater hook-up the landlord's technician called trivial and offered to do free; >€2,000 for 4–5 wall holes for the AC and TV.", amount:"€3,200 / €4,000 / €2,000 challenged", freq:"request 3 of 11"},
+  {d:"2025-04-27", cat:"issue", t:"Status meeting — headline budget ~€278k", x:"The project status minute references an overall figure of about €278,000 — well above the original envelope."},
+  {d:"2025-04-28", cat:"dispute", key:true, t:"Site halted over budget — resumption made conditional", x:"TCL's account: the agency stopped work over the budget dispute, and getting it moving again was effectively tied to signing the second contract and paying. Internally, TCL describes this as being put under pressure to accept the inflated budget.", freq:"work stoppage"},
+  {d:"2025-04-29", cat:"quote", key:true, t:"Second quotation — full construction scope", x:"Devis D-2025-20 covers the build itself: flooring €17,693, electricity €37,295.90, ceilings €14,586.22, plumbing €4,600, technical-file management €15,400, plus expanded design fees (€43,400).", doc:"Devis D-2025-20"},
+  {d:"2025-04-29", cat:"contract", t:"Second contract — Showroom Part 2", x:"The 'Showroom 2' framework agreement is sent for Finance and Legal approval and on to DocuSign for Carlos' signature."},
+  {d:"2025-04-29", cat:"schedule", key:true, t:"Schedule revised (V2) — end date moved to 23 May", x:"Retro-planning V2 restates the project as 18 March → 23 May 2025. This is the formal agreement to move the deadline, roughly two months past the original target.", doc:"Rétroplanning TCL V2.xlsx"},
+  {d:"2025-05-06", cat:"payment", key:true, t:"Major payment to Unchained — €207,241.91", x:"An HSBC transfer from TCL Europe clears with value date 6 May. TCL attaches the proof of payment and explicitly asks the agency not to delay the site delivery again.", amount:"€207,241.91", doc:"HSBC payment advice"},
+  {d:"2025-05-12", cat:"dispute", t:"Detail request #4 — cost breakdown + door pricing", x:"As the build closes, TCL again asks for a detailed cost breakdown and queries specific items, e.g. what is included in the €1,761 doors line.", freq:"request 4 of 11"},
+  {d:"2025-05-15", cat:"delivery", t:"Czech crew installs furniture & products (15–20 May)", x:"With the agency unable to deliver furniture on time and within budget, TCL sources a last-minute alternative — furniture maker TPR (Czech Republic) and a Czech installation crew, transporting everything Praha–Paris."},
+  {d:"2025-05-27", cat:"delivery", t:"Opening photos taken", x:"The first photos of the finished showroom are shared internally."},
+  {d:"2025-05-28", cat:"delivery", key:true, t:"Showroom delivered", x:"TCL Home Paris is handed over — the reconstructed house is complete and operating as a brand showroom."},
+
+  // ---------- CLOSE-OUT & DISPUTE ----------
+  {d:"2025-05-29", cat:"dispute", t:"Detail request #5 — renewed before sign-off", x:"TCL renews the demand for the detailed budget before agreeing the final figure.", freq:"request 5 of 11"},
+  {d:"2025-06-03", cat:"dispute", key:true, t:"Detail requests #6–7 — escalated, legal cc'd", x:"By 3 June TCL has still had no feedback on the detailed expense description. Lisa stresses it is not about a few token lines but the whole budget, notes the breakdown has been asked for repeatedly since the work stoppage, copies the legal director, and demands a final reply within the week.", freq:"requests 6–7 of 11"},
+  {d:"2025-06-10", cat:"dispute", t:"Detail request #8 — 'I need to understand the cost'", x:"Jakub tells the agency he needs the details and a proper explanation of the cost before any final invoice can be agreed.", freq:"request 8 of 11"},
+  {d:"2025-06-09", cat:"payment", t:"Closing invoices issued", x:"The replacement furniture and logistics are invoiced: TPR (CZ) €45,455 (due 9 Jul) and showroom install & transport €23,839. Unchained's own final budget lands as V15-B.", amount:"€45,455 + €23,839", doc:"FAV 250100339 · 22025171"},
+  {d:"2025-06-12", cat:"dispute", key:true, t:"Detail request #9 — budget formally disputed", x:"At the debrief the project team records that it 'strongly disagrees' with Unchained's budget and is still waiting for the detailed explanation to justify the invoice, noting it has made multiple demands for this throughout the negotiation.", freq:"request 9 of 11"},
+  {d:"2025-07-23", cat:"dispute", t:"Legal takes over the file", x:"TCL's Legal Director (Sandra Dorizon) steps into the correspondence and consolidates the contractor, landlord and lease threads under Legal."},
+  {d:"2025-09-30", cat:"dispute", key:true, t:"Detail request #10 — legal: still no breakdown", x:"TCL Legal records that, to date, Unchained has still not been able to provide detailed breakdowns of the construction and purchase costs — months after the first request.", freq:"request 10 of 11"},
+  {d:"2025-10-03", cat:"dispute", key:true, t:"Final balance withheld — agency chases payment", x:"Unchained presses for its final balance ('you are 4 months late right now'). TCL withholds payment, replying only that it is 'checking internally for the reasons' — i.e. the still-unjustified costs.", doc:"Facture de solde TCL"},
+  {d:"2026-01-28", cat:"dispute", key:true, t:"TCL formalises its grievances to Legal", x:"Julie and Jakub set out TCL's full position for Legal, point by point: €39,800 of unplanned work done without approval; agency fees raised from €24,000 to €51,300 without notice; planning repeatedly missed and the site stopped over budget; repairs only partly done and re-billed each time; agreed paint references ignored, forcing a full repaint; the €300k all-in cap broken, forcing last-minute furniture re-sourcing. TCL proposes to reject the €27,300 fee increase and pay €25,637.56.", amount:"claim €44,114.63 HT", ledger:true, freq:"request 11 of 11"},
+  {d:"2026-03-24", cat:"dispute", key:true, t:"Agency offers 10% discount — TCL rejects it", x:"At a meeting on 24 March, Unchained offers a 'commercial gesture' of 10% off its final invoice (about €4,400 off the ~€44k claim) in exchange for dropping TCL's reasonable-settlement proposal. TCL rejects it on the spot as unacceptable, given the costs are still unjustified.", amount:"10% off · rejected"},
+  {d:"2026-04-03", cat:"dispute", key:true, t:"Formal notice of payment — TCL counter-offers €38,000", x:"Against a 'Formal Notice of Payment' on the final invoice, TCL Legal proposes a last amicable figure of €38,000 (raised from an earlier €32,000, and about €10k below the agency's number). Leadership backs holding the line; Legal notes it did not find the agency's explanations honest.", amount:"€32k → €38k offer"},
+  {d:"2026-06-09", cat:"dispute", key:true, t:"Summons from Unchained", x:"Unchained issues a legal summons over the unpaid showroom invoices. TCL engages a law firm and begins assembling the case file.", freq:"litigation"},
+  {d:"2026-06-15", cat:"dispute", t:"Lawyer meeting on the case", x:"TCL Legal meets the lawyer to review the summons and plan the defence."},
+  {d:"2026-06-16", cat:"dispute", t:"'Litige TCL-Unchained' case file opened", x:"A shared case folder is circulated internally; the dispute is formally in litigation."},
+];
+
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function fmt(d){const [y,m,day]=d.split("-").map(Number);return {day,mon:MONTHS[m-1].slice(0,3),y,mlabel:MONTHS[m-1]+" "+y};}
+function phaseOf(d){return d < "2025-05-29" ? "build" : "dispute";}
+
+const ledgerHTML = `
+<div class="ledger" id="ledgerBox">
+  <h4>The disputed numbers</h4>
+  <p class="cap">All line items excl. VAT (HT), as quoted. The final claim was billed incl. VAT and is converted here.</p>
+  <div class="grid">
+    <div class="row"><span class="lab">Agency / design fees — first quote</span><span class="num">€24,000</span></div>
+    <div class="row"><span class="lab">Agency / design fees — final</span><span class="num up">€51,300</span></div>
+    <div class="row"><span class="lab">Unplanned work, done without approval</span><span class="num up">€39,800</span></div>
+    <div class="row"><span class="lab"><b>Questionable / unjustified</b> agency items</span><span class="num">€67,900</span></div>
+  </div>
+  <ul>
+    <li><b>Unjustified roles (part of the €67,900):</b> creative director €14,300 and consulting director €13,200 for people TCL never met — its only contacts were Luc and "JB"; plus project management €13,800 and technical-file management €14,900, which appear to overlap for the same scope.</li>
+    <li><b>Extra works never itemised:</b> electricity and other on-site "surprises" billed without the dated, line-by-line breakdown TCL asked for 11 times.</li>
+    <li><b>Painting:</b> agreed colour references weren't followed and weren't flagged, so the whole area had to be repainted at TCL's cost.</li>
+    <li><b>Furniture:</b> the agency couldn't deliver on time or within the €300k cap, so TCL re-sourced furniture last-minute (TPR, Czech Republic).</li>
+  </ul>
+  <div class="claim">
+    <span><span class="lab2">Agency's final claim</span><br><span class="big">€44,114.63 <small>excl. VAT · €52,937.56 incl.</small></span></span>
+    <span><span class="lab2">Agency settlement offer (24 Mar 26)</span><br><span class="ctr">10% off — rejected</span></span>
+    <span><span class="lab2">TCL counter-offers</span><br><span class="ctr">€25,637.56 → €32,000 → €38,000</span></span>
+    <span><span class="lab2">Outcome</span><br><span class="ctr" style="color:var(--oxblood)">Summons · in litigation</span></span>
+  </div>
+</div>`;
+
+const reqlogHTML = `
+<div class="reqlog" id="reqlogBox">
+  <h4>Budget-detail requests — the full cadence</h4>
+  <p class="cap">Every time TCL asked Unchained to itemise / justify the costs. Spans Apr 2025 – Apr 2026; never fully answered.</p>
+  <ol>
+    <li><span class="rd">15 Apr 2025</span><span class="rt"><b>Separate, itemised list</b> of all unplanned construction TCL never requested.</span></li>
+    <li><span class="rd">16 Apr 2025</span><span class="rt">Detail behind the <b>flooring</b> costs, to close the budget.</span></li>
+    <li><span class="rd">25 Apr 2025</span><span class="rt">Full per-line breakdown — <b>hours, man-hours/labour, m², material quantities</b> — for every post.</span></li>
+    <li><span class="rd">12 May 2025</span><span class="rt">Cost breakdown again + what's inside specific lines (e.g. the doors).</span></li>
+    <li><span class="rd">29 May 2025</span><span class="rt">Renewed before agreeing any final figure.</span></li>
+    <li><span class="rd">2–3 Jun 2025</span><span class="rt">Chased twice; escalated with the <b>legal director cc'd</b>, final reply demanded that week.</span></li>
+    <li><span class="rd">10 Jun 2025</span><span class="rt">"I need to understand the details and your explanation of the cost."</span></li>
+    <li><span class="rd">12 Jun 2025</span><span class="rt">Budget <b>formally disputed</b>; notes "multiple demands" already made.</span></li>
+    <li><span class="rd">30 Sep 2025</span><span class="rt">Legal: still <b>no detailed breakdown</b> of construction & purchase costs.</span></li>
+    <li><span class="rd">28 Jan 2026</span><span class="rt">"We do not have the detailed invoicing of work done <b>with dates</b>."</span></li>
+    <li><span class="rd">4 Apr 2026</span><span class="rt">Agency's replies "do not answer the questions precisely" — still inadequate.</span></li>
+  </ol>
+  <div class="out">→ The itemised, dated breakdown was never delivered.</div>
+</div>`;
+
+const fbar=document.getElementById("filters");
+const used=[...new Set(M.map(m=>m.cat))];
+let active="all";
+function chip(cat,label,color){
+  const b=document.createElement("button");
+  b.className="chip";b.dataset.cat=cat;b.setAttribute("aria-pressed",cat==="all");
+  b.innerHTML=(cat==="all"?"":'<span class="dot" style="color:'+color+'"></span>')+label;
+  b.onclick=()=>{active=cat;[...fbar.children].forEach(c=>c.setAttribute("aria-pressed",c.dataset.cat===cat));render();};
+  return b;
+}
+fbar.appendChild(chip("all","All milestones"));
+used.forEach(c=>fbar.appendChild(chip(c,CATS[c].label,CATS[c].color)));
+
+const tl=document.getElementById("timeline");
+function render(){
+  tl.innerHTML="";
+  let lastMonth=null,lastPhase=null;
+  M.forEach(m=>{
+    const f=fmt(m.d), ph=phaseOf(m.d);
+    if(ph!==lastPhase){
+      const p=document.createElement("div");p.className="phase"+(ph==="dispute"?" dispute":"");
+      p.innerHTML='<div class="ph">'+(ph==="build"?"The build":"Close-out &amp; dispute")+'</div>'+
+        '<div class="psub">'+(ph==="build"?"Oct 2024 – May 2025 · sourcing to handover":"May 2025 – Jun 2026 · invoices, contestation, litigation")+'</div>'+
+        '<div class="rule"></div>';
+      tl.appendChild(p);
+      if(ph==="dispute"){
+        const d1=document.createElement("div");d1.innerHTML=ledgerHTML;tl.appendChild(d1.firstElementChild);
+        const d2=document.createElement("div");d2.innerHTML=reqlogHTML;tl.appendChild(d2.firstElementChild);
+      }
+      lastPhase=ph;lastMonth=null;
+    }
+    if(f.mlabel!==lastMonth){
+      const sep=document.createElement("div");sep.className="monthsep";
+      sep.innerHTML='<span class="m">'+f.mlabel+'</span><span class="line"></span>';
+      tl.appendChild(sep);lastMonth=f.mlabel;
+    }
+    const show=(active==="all"||m.cat===active);
+    const it=document.createElement("div");
+    it.className="item "+m.cat+(m.key?" key":"")+(m.missed?" missed":"")+(show?"":" dimmed");
+    const col=CATS[m.cat].color;
+    it.innerHTML=
+      '<div class="when"><b>'+f.day+'</b>'+f.mon+' <i>'+f.y+'</i></div>'+
+      '<div class="body">'+
+        '<span class="node" style="border-color:'+col+'"></span>'+
+        '<span class="cat" style="color:'+col+'">'+CATS[m.cat].label+'</span>'+
+        '<h4>'+m.t+'</h4><p>'+m.x+'</p>'+
+        ((m.amount||m.doc||m.freq)?'<div class="meta">'+
+            (m.amount?'<span class="amount'+(m.cat==="dispute"?" ox":"")+'">'+m.amount+'</span>':'')+
+            (m.freq?'<span class="freq">'+m.freq+'</span>':'')+
+            (m.doc?'<span class="doc">'+m.doc+'</span>':'')+
+          '</div>':'')+
+      '</div>';
+    tl.appendChild(it);
+  });
+}
+render();
+</script>
+</body>
+</html>
