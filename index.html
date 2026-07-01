@@ -110,6 +110,19 @@
   .freq{font-size:11px;color:var(--oxblood);background:rgba(122,16,32,.06);border-radius:3px;padding:2px 8px;font-weight:600;}
   .doc{font-size:11px;color:var(--faint);font-style:italic;}
   .item.key h4::after{content:"★";color:var(--red);font-size:12px;margin-left:8px;}
+
+  /* Icon buttons */
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:1px 4px;border-radius:3px;line-height:1;opacity:.65;transition:opacity .15s;}
+  .icon-btn:hover{opacity:1;}
+
+  /* ℹ️ tooltip popup */
+  .info-popup{display:none;position:absolute;z-index:20;background:var(--card);border:1px solid var(--hair-strong);border-radius:5px;padding:10px 14px;font-size:12px;line-height:1.6;box-shadow:0 4px 18px rgba(0,0,0,.13);min-width:220px;max-width:320px;white-space:normal;}
+  .info-popup.open{display:block;}
+  .info-popup .ip-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:2px;}
+  .info-popup .ip-val{color:var(--ink);font-weight:500;}
+  .info-popup .ip-row{margin-bottom:6px;}
+  .info-popup .ip-row:last-child{margin-bottom:0;}
+  .info-wrap{position:relative;display:inline-block;}
   .item.dispute.key h4::after{color:var(--oxblood);}
   .item.missed .node{border-color:var(--c-issue);}
   .item.dimmed{opacity:.16;}
@@ -132,6 +145,19 @@
   .item.dispute.flash{animation:flashbgox 1.4s ease-out;}
   @keyframes flashbgox{0%{background:rgba(122,16,32,.12);}100%{background:transparent;}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+  /* Email modal */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card);border-radius:6px;max-width:680px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.25);}
+  .modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--hair);flex-shrink:0;}
+  .modal-subject{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--ink);margin:0 0 12px;line-height:1.3;}
+  .modal-meta{font-size:12px;color:var(--muted);display:grid;grid-template-columns:40px 1fr;gap:4px 10px;line-height:1.5;}
+  .modal-meta b{color:var(--faint);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10px;}
+  .modal-body{padding:20px 22px;overflow-y:auto;font-size:13.5px;color:var(--ink);line-height:1.7;white-space:pre-wrap;flex:1;}
+  .modal-foot{padding:12px 22px;border-top:1px solid var(--hair);display:flex;justify-content:flex-end;flex-shrink:0;}
+  .modal-close{font-size:13px;padding:7px 18px;background:var(--ink);color:#fff;border:none;border-radius:3px;cursor:pointer;}
+  .modal-close:hover{background:#333;}
+
 </style>
 </head>
 <body>
@@ -194,59 +220,731 @@ const CATS = {
   dispute  :{label:"Dispute & pricing",     color:"var(--c-dispute)"},
 };
 
+const EMAIL_DATA = [
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Agencies: Unexpected, Holo, Seven, We Event`,d:`24 Oct 2024`,s:`TCL House Paris — Brief agencies`,b:`Brief sent to candidate agencies to develop showroom concepts for the building at 4 rue Delahaye, Issy-les-Moulineaux.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`TCL Home Project Team (Carlos Li, Stefan Streit, Jakub VETROVEC, Julie Furlan Polak…)`,d:`Fri, 29 Nov 2024 15:52`,s:`Week 1 Report: 【Home Project Team Notification】4 rue Delahaye`,b:`Dear all,
+
+Please find week one project progress and week 2 pending task debrief.
+
+TCL Home Project Report – Week 1 (25/Nov – 29/Nov/2024)
+
+Progress achieved:
+• Place visit: Virginie, Isabelle and Mindy ZHANG visited TCL Home with concept design suppliers (WE Event, ACME)
+• Concept design: Supplier SEVEN is already on the primary design draft
+• Request to Supplier: 3D design plan delivered before 19/Dec/2024
+• Contract: TCL received lease contract, Legal department is reviewing it
+• Product Team Initiation: Karen led team formed`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`TCL Home Project Team`,d:`13 Dec 2024`,s:`RE: 【TCL Home Project】 TCL Contract Template`,b:`After a three-party meeting, Legal begins drafting the contract. Signature is planned for the following week. Contract template shared for review with Unchained.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`TCL Home Project Team`,d:`Fri, 20 Dec 2024 14:58`,s:`Week 4 Report: 【TCL Home Project】4 rue Delahaye`,b:`Dear Team,
+
+We have made progress in the TCL Home project. 1st milestone is achieved.
+
+Week 4 (16/Dec – 20/Dec/2024)
+
+Progress achieved:
+• Contract: Milestone achieved – contract confirmed in 3 parties, DocuSign will be triggered for Carlos' signature after the new year holiday.
+• Concept: Shortlist of contractors drawn up for the reconstruction. Three finalists selected for final pitch.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Henry ZHU, Carlos Li, Stefan Streit, Easton Kim, Jakub VETROVEC, Julie Furlan Polak…`,d:`Mon, 6 Jan 2025 11:30`,s:`Tcl home project supplier assessment template V1: 【1st discussion on TCL Home project conception proposal】`,b:`Hi Henry and Anna,
+
+Below is the supplier selection sheet designed for TCL Home project. This is V1, based on our meetings and suggestions, with targeted suppliers.
+
+Supplier Assessment — Evaluation dimensions:
+• Conception design
+• 3D rendering quality
+• Project management
+• Budget control
+• Previous experience
+
+Candidates: Unexpected / Unchained, We Event, Seven
+
+Please let me know your thoughts. If no questions, we will follow this template for 2nd round assessment.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Virginie Guimaraes, Carlos Li, Stefan Streit, Patrick Boudinski, Easton Kim, Henry ZHU`,d:`Mon, 27 Jan 2025 09:38`,s:`RE: 【Final result】TCH Home project supplier`,b:`Thanks, yes we should always loop Flore/Alex in as well.
+
+BR
+Lisa Huyun
+Office Manager TCL Europe
+
+—
+From: Virginie Guimaraes
+Sent: Monday, January 27, 2025 10:05 AM
+
+Final result: Unchained (ex-Unexpected) wins the TCL Home project. The selection has been communicated internally and agencies have been informed.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Loïc Rebours (Unchained), Luc Haté (Unchained) — cc: Carlos Li, Julie Furlan Polak, Sandra Dorizon, Jakub VETROVEC`,d:`Thu, 20 Feb 2025 08:38`,s:`RE: LOI singed: [External Sender]RE: 【TCL Home Project】 TCL Contract Template`,b:`Bonjour Loic,
+
+Oui 12H pour moi et Julie.
+Possible Jakub va participer aussi.
+
+Je vous enverrai un Teams lien pour la réunion tout de suite.
+
+BR
+Lisa Huyun
+Office Manager TCL Europe
+
+—
+Luc Haté (CEO, Unchained) confirms acceptance of the proposed scope. LOI signed. Kick-off meeting scheduled.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Luc Haté, Loïc Rebours, TCL Legal`,d:`11 Feb 2025`,s:`【TCL Home Project】 TCL Contract Template — framework agreement`,b:`The contract template / framework agreement is shared for review with Unchained.
+
+Legal is checking the scope of services, delivery schedule, and payment terms.
+
+Signature by Carlos expected via DocuSign.`},
+  {f:`Luc Haté <luc@agence-unchained.com>`,to:`Julie Furlan Polak, Jakub VETROVEC`,d:`Wed, 12 Feb 2025 16:19`,s:`Re: [External Sender]Re: Retroplanning TCL Home`,b:`Hello Julie, Jakub,
+
+Please find attached the first TCL Home Schedule.
+
+This is a light schedule; details are missing, but the main objective was to set the principal project steps.
+
+We are really confident about this schedule, and we could even gain some time if the validation and exchange phase is faster than expected.
+
+Kind regards,
+Luc
+
+LUC HATÉ — CEO & DIRECTEUR DE CRÉATION
+luc@agence-unchained.com
++33 6 45 59 44 48`},
+  {f:`Isabelle Ustyanowski <Isabelle.ustyanowski@tcl.com>`,to:`Mokan, Jakub VETROVEC, Julie Furlan Polak, Lisa Huyun, Tom Feng, Monica SONG`,d:`Tue, 18 Feb 2025 12:09`,s:`TCL Home showroom: Exchange of Samsung AC by TCL + visit on site`,b:`Dear Tom, Monica,
+
+As far as I know, you will be in Paris this week. I am at your disposal to visit the TCL Home showroom with you (5 minutes walk from our offices).
+
+Actually, there are 6 Samsung AC wallmounted:
+• Multi split: 1 on the mezzanine / 4 on the ground floor
+• Monosplit: on the 1st floor in a cupboard in the corridor
+
+The replacement of the Samsung air conditioners:
+• Replace the mezzanine unit with FreshIN 3.0
+• Replace 4 ground-floor units with BreezeIN P9 / P5
+
+This decision will later drive extra wall/partition work and additional costs contested by TCL.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Loïc Rebours, Luc Haté (Unchained) — cc: Carlos Li, Julie Furlan Polak, Sandra Dorizon, Jakub VETROVEC`,d:`Thu, 20 Feb 2025 08:38`,s:`RE: LOI singed: [External Sender]RE: 【TCL Home Project】 TCL Contract Template`,b:`Bonjour Loic,
+
+Oui 12H pour moi et Julie.
+Possible Jakub va participer aussi.
+
+Je vous enverrai un Teams lien pour la réunion tout de suite.
+
+BR
+Lisa Huyun
+Office Manager TCL Europe
+
+—
+LOI signed by all parties. Kick-off meeting confirmed with Julie, Lisa and Jakub at 12:00.`},
+  {f:`Loïc Rebours <loic@agence-unexpected.com>`,to:`Lisa Huyun`,d:`Wed, 26 Feb 2025 17:49`,s:`RE: [External Sender]RE: TCL Ground Floor Projection 02`,b:`Hello Lisa,
+
+Please find attached the quotation and invoice.
+
+Regards,
+LOÏC REBOURS — FOUNDER & CEO
++33 (0)6 25 47 02 50
+agence-unexpected.com
+
+—
+Ground floor demolition and construction plan finalised. Production green-light given. Works begin 26 February 2025.`},
+  {f:`Loïc Rebours <loic@agence-unexpected.com>`,to:`Lisa Huyun, Julie Furlan Polak`,d:`Wed, 26 Feb 2025`,s:`Devis D-2025-16 — Quotation`,b:`Hello Lisa,
+
+Please find attached the quotation.
+
+Devis D-2025-16:
+• Agency / design fees: €24,000 HT (creative director, consulting director, architect, project management)
+• Site set-up and demolition: €23,179.80 HT
+• Total: €47,179.80 HT
+
+Payment terms: 50% deposit on signing, balance on completion.
+
+Regards,
+LOÏC REBOURS — FOUNDER & CEO`},
+  {f:`Loïc Rebours <loic@agence-unexpected.com>`,to:`Lisa Huyun, Julie Furlan Polak`,d:`Wed, 26 Feb 2025`,s:`Facture F-2025-022632 — Acompte 50%`,b:`Bonjour,
+
+Veuillez trouver ci-joint la facture F-2025-022632 correspondant à l'acompte de 50% sur le Devis D-2025-16.
+
+Montant: 50% de €47,179.80 HT = €23,589.90 HT
+
+Le solde sera dû à la fin de la mission.
+
+Cordialement,
+LOÏC REBOURS — Agence Unchained (ex-Unexpected)`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`TCL Home Project Team`,d:`26 Feb 2025`,s:`TCL Home — Démarrage chantier`,b:`Dear team,
+
+Dismantling, demolition and construction have begun on the ground floor today, on schedule.
+
+The site team is in place. Week 1 of production is underway.
+
+BR
+Lisa Huyun`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Isabelle Ustyanowski, Julie Furlan Polak`,d:`Tue, 4 Mar 2025 22:55`,s:`RE: TCL Home: AC product list with priority`,b:`Dear Isabelle, Lisa, dear all,
+
+I am working together with the agency on the product placement now. We will share update with products placed on exact position, also with the design feedback from last call ASAP.
+
+Thank you for your understanding...
+
+Kind regards,
+Jakub Větrovec
+Senior Retail Marketing Manager EU
++420 778 051 286`},
+  {f:`Isabelle Ustyanowski <Isabelle.ustyanowski@tcl.com>`,to:`Julie Furlan Polak, Jakub VETROVEC`,d:`Thu, 13 Mar 2025 09:48`,s:`TCL House - AC product layout proposal + location functional AC`,b:`Hi Julie, Jakub,
+
+As discussed during the meeting, please check in attachment AC proposal layout + location for functional AC:
+
+1. GROUNDFLOOR: Wallmounted AC:
+• FreshIN 3.0 Series C8
+• BreezeIN 2.0 P9
+• BreezeIN P5 (TBC — used as functional AC for heat & cooling)
+
+2. Basement: Light commercial AC:
+• Outdoor unit MT4250 1 to 5 Indoor Units
+• Indoor unit: Cassette / Air Duct / Console / BreezeIN P4 / Elite F2
+
+Please confirm so we can coordinate with the agency.`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Julie Furlan Polak, Luc (Unchained) team`,d:`Thu, 6 Mar 2025 22:22`,s:`RE: [External Sender]Concept Space Projection 04`,b:`Hi Julie,
+
+Sending this just to you — please communicate with both TCL team and Luc team properly.
+
+1. My layout with products placement:
+— Placed as many products as possible; 2 pages, slightly different laundry zone layouts.
+— Marked all products for display with comments on which go upstairs.
+
+2. Design review for projections 01–04 completed. Ground floor validated.
+
+Kind regards,
+Jakub Větrovec`},
+  {f:`Stefan Streit <stefan.streit@tcl.com>`,to:`Julie Furlan Polak, Carlos Li, Easton Kim`,d:`Wed, 19 Mar 2025 15:27`,s:`Re: TCL Home flooring issue`,b:`Hi Julie,
+
+Thanks for your feedback and I understand that makes sense.
+
+I would prefer that it looks premium and keeps the 'home' and lifestyle feeling. We should select the right material for this as I would like to avoid the kind of office or industrial feeling.
+
+Let the agency make the proposals and also cost for each option. We need to stay within overall budget — this should not be a new requirement and should be part of their offer.
+
+Let's go ahead as you proposed.
+
+Thanks!
+Stefan Streit
+Marketing Department, TCL Europe`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`TCL Home Project Team`,d:`26 Mar 2025`,s:`TCL Home — Suivi chantier (deadline 26 mars dépassée)`,b:`Dear team,
+
+The planned opening date of 26 March has passed. The showroom is not yet ready.
+
+Construction, design approvals and first budget tensions all continue. We are working with the agency to establish a revised timeline.
+
+More details to follow.
+
+BR
+Lisa Huyun`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Julie Furlan Polak`,d:`Wed, 16 Apr 2025 13:40`,s:`Jakub VETROVEC shared "BUDGET TCL V5 Unchained_TCL comments 2025-04-16" with you`,b:`Jakub VETROVEC invited you to edit a file.
+
+📄 BUDGET TCL V5 Unchained_TCL comments 2025-04-16.xlsx
+
+This is Unchained's first full cost roll-up across all floors — the document that exposes how far costs have grown beyond the original envelope. TCL's comments are added inline.
+
+Kind regards,
+Jakub Větrovec
+Senior Retail Marketing Manager EU`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained)`,d:`15 Apr 2025`,s:`RE: TCL Home — Demande détail travaux non prévus (request 1 of 11)`,b:`Dear Luc, Loïc,
+
+Before our budget meeting, I need you to deliver a separate, detailed cost list covering every piece of unplanned construction that TCL never requested.
+
+This is essential for us to check the extra charges before the budget review meeting.
+
+Please provide an itemised breakdown with:
+• Description of each unplanned work item
+• Justification for why it was needed
+• Cost per item
+
+This is our FIRST formal request for this breakdown.
+
+BR
+Lisa Huyun`},
+  {f:`Julie Furlan Polak <julie.furlan@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained)`,d:`16 Apr 2025 08:15`,s:`RE: TCL Home — Détail budget sol (request 2 of 11)`,b:`Bonjour Luc,
+
+Could you please send me the flooring ('sol') budget first thing this morning so we can close this figure?
+
+We need the detail behind the flooring costs to reconcile with the overall budget.
+
+The previous request for a full breakdown of all unplanned works is still outstanding.
+
+Merci,
+Julie`},
+  {f:`Luc Haté <luc@agence-unchained.com>`,to:`Julie Furlan Polak`,d:`Tue, 22 Apr 2025 21:04`,s:`Re: [External Sender]Re: Revue du budget et demande de réajustement`,b:`Hello Julie,
+
+Comme convenu, nous avançons sur la revue du budget.
+
+Pour le moment notre scope se concentre sur cette structure :
+
+1 — Budget max de 300k€ incluant l'ensemble du Showroom
+
+2 — Budget supplémentaire décorrélé du budget initial qui comprend les éléments non prévisibles de la construction dû au lieu et aux malfaçons du lieu (env. 37k€)
+
+Concernant le budget supplémentaire, nous allons vous préparer un document détaillé des éléments non prévisibles.
+
+Kind regards,
+Luc`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Julie Furlan Polak, Jakub VETROVEC, Stefan Streit`,d:`Fri, 25 Apr 2025 12:15`,s:`Negotiation Point _ Showroom: Re: TCL Home - budget - urgent (request 3 of 11)`,b:`Dear Julie and Jakub,
+
+Please check my reference, as JB's pricing is not reasonable.
+
+1. Setting up the site for construction:
+JB asks for €3,200 HT for ~100 m²
+My office project: ~1,200 m² = €4,706 HT → disproportionate.
+
+2. Plomberie:
+JB asks ~€4,000 for 'pose de ballon d'eau chaude'.
+I spoke to the landlord's technician — this is a very simple quick connection. He offered to do it for free.
+
+3. Cloisons:
+JB asks >€2,000 for 4–5 holes in the wall for AC and TV mounts. Very high and unreasonable.
+
+We need a full line-by-line breakdown: hours, man-hours/labour, m², raw-material quantities — for EVERY line item.
+
+BR
+Lisa Huyun`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Henry ZHU, Tony Xia, Ying HU (TCL Management)`,d:`Thu, 12 Jun 2025 12:04`,s:`TCL Home Project Debrief: Meeting Minute — status Apr 27`,b:`Dear Managers,
+
+Overall Budget:
+Invoice 1: €47,179.80 | Unchained | PAID
+Invoice 2: €172,701.59 | Unchained | PAID
+Invoice 3: €52,937.56 | Unchained | NOT PAID — DISPUTE
+
+Total budget reference: €300k
+Headline figure at status meeting (27 Apr): ~€278,000 — well above original €250k.
+
+Project team (Julie, Jakub and I) will follow up.
+
+BR
+Lisa Huyun`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Julie Furlan Polak, Lisa Huyun, Luc Haté`,d:`Mon, 28 Apr 2025 22:15`,s:`RE: [External Sender]Re: Retroplanning + status`,b:`Hello Luc,
+
+Attached please find the list in XLS with all items which need to be produced/purchased for TCL House.
+
+I would like to ask you for more specifications for items where we don't have information from your side (seats, carpets, wall paints, etc.)
+
+Also some items with '???' — we need to decide who will provide (if you or us from CZ).
+
+Hope this will also help with preparation of the detailed budget overview.
+
+Thank you
+Jakub Větrovec
+Senior Retail Marketing Manager EU
+
+[Context: Agency has stopped work. Resumption conditional on signing Contract 2 and paying.]`},
+  {f:`Loïc Rebours / Luc Haté (Unchained)`,to:`Lisa Huyun, Julie Furlan Polak, Jakub VETROVEC`,d:`29 Apr 2025`,s:`Devis D-2025-20 — Full construction scope`,b:`Devis D-2025-20 — Construction scope:
+
+• Flooring: €17,693 HT
+• Electricity: €37,295.90 HT
+• Ceilings: €14,586.22 HT
+• Plumbing: €4,600 HT
+• Technical file management: €15,400 HT
+• Design / agency fees (expanded): €43,400 HT
+
+This quotation covers the full build scope for Part 2 of the showroom project. Contract 2 ('Showroom Part 2') to be signed via DocuSign by Carlos Li.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Julie Furlan Polak, Jakub VETROVEC, Sandra Dorizon, Tony Xia`,d:`Tue, 29 Apr 2025 14:36`,s:`TCL & Unchained Contract for 2nd part of Showroom project`,b:`Dear Julie / Jakub,
+
+Please double check attached Contract draft for 2nd part of TCL Home project.
+
+Major points to check:
+• Scope of service
+• Delivery schedule
+• Global quotation
+• Retro-planning
+• Acceptance methods
+
+If it is fine from your MKT point of view, I will get approval from Finance and Legal and then move on the DocuSign process for Carlos' signature.
+
+Best Regards
+Lisa Huyun / Office Manager TCL Europe`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Stefan Streit, Julie Furlan Polak, Jakub VETROVEC`,d:`Wed, 30 Apr 2025 15:14`,s:`Showroom Plan _ Retroplanning — V2 (fin 23 mai)`,b:`Dear Stefan,
+
+As discussed, please check the work plan proposed by Julie and confirmed with Agency.
+
+Product manager contacts:
+TV: yuxin4.lin@tcl.com
+AC: Isabelle.ustyanowski@tcl.com
+MDA: ying.c@tcl.com
+TCT: effie.sun@tcl.com
+
+Rétroplanning V2:
+PROJET: TCL SHOWROOM
+Date de début: 18 Mars 2025
+Date de fin: 23 MAI 2025
+
+This is the formal agreement to move the deadline — roughly two months past the original 26 March target.
+
+BR
+Lisa Huyun`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained)`,d:`Tue, 6 May 2025 08:04`,s:`RE: Information importante: CONTRAT N2 - TCL X UNCHAINED — Preuve de paiement`,b:`Bonjour Loic et Luc,
+
+Veuillez trouver ci-joint notre preuve de paiement.
+
+Comme déjà mentionné à plusieurs reprises dans nos échanges, nous vous remercions de ne pas retarder la livraison de chantier cette fois-ci.
+
+Je reste à votre disposition.
+
+Best Regards
+Lisa Huyun / Office Manager
+TCL Europe — 15 Rue Rouget de Lisle, 92130 Issy Les Moulineaux
+
+[HSBC transfer: €207,241.91 — value date 6 May 2025]`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Jakub VETROVEC, Julie Furlan Polak (fwd from Luc Haté)`,d:`Tue, 13 May 2025 12:06`,s:`FW: [External Sender]Final budget — detail request 4 of 11`,b:`fyi
+
+—
+From: Luc Haté, 13 May 2025
+
+Dear Jakub, Julie,
+Please find attached our final budget V15-B.
+
+—
+TCL response: As the build closes, TCL again asks for a detailed cost breakdown and queries specific items, e.g. what is included in the €1,761 doors line.
+
+Request 4 of 11 for a full itemised breakdown remains unanswered.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Alexandru MANEA, Jakub VETROVEC, Julie Furlan Polak`,d:`Wed, 7 May 2025 17:54`,s:`Re: LIVRAISON TCL HOME — confirmation 19 mai`,b:`Hello Alexandru,
+
+Confirmed with Julie and also aligned with content of our meeting: 19th of May delivery is preferred. Please arrange in the morning.
+
+Thanks :)
+
+BR
+Lisa Huyun
+
+—
+[Context: Agency unable to deliver furniture on time within budget. TCL sources last-minute alternative — furniture maker TPR (Czech Republic) and Czech installation crew, transporting Praha → Paris. Install runs 15–20 May.]`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Easton Kim, Julie Furlan Polak, Ondrej Palinek`,d:`Tue, 27 May 2025 14:21`,s:`TCL Home openning photos`,b:`Hi,
+
+Here are photos (and videos later) from the opening event:
+
+📁 TCL Home Opening photos [SharePoint]
+
+Thank you
+Kuba
+
+Jakub Větrovec
+Senior Retail Marketing Manager EU
+Tel.: +420 778 051 286
+jakub.vetrovec@tcl.com
+TCL Czech — Jankovcova 1603, Classic7 building L, 170 00 Praha 7`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Easton Kim, Julie Furlan Polak, Stefan Streit, TCL EU Team`,d:`28 May 2025`,s:`TCL Home Paris — Livraison showroom ✓`,b:`Hi all,
+
+TCL Home Paris is handed over. The reconstructed house is complete and operating as a brand showroom.
+
+Handover confirmed with agency. Site is live at 4 rue Delahaye, Issy-les-Moulineaux.
+
+Final delivery: 28 May 2025 — 63 days after the original planned opening of 26 March.
+
+Kind regards,
+Jakub Větrovec`},
+  {f:`Julie Furlan Polak <julie.furlan@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained)`,d:`29 May 2025`,s:`RE: TCL Home — Détail budget avant validation solde (request 5 of 11)`,b:`Bonjour Luc,
+
+Before we can agree the final figure, we still need the detailed budget breakdown we have been requesting since April.
+
+This is our fifth request. Please provide the itemised cost list before we proceed to sign off.
+
+Merci,
+Julie Furlan Polak`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained) — cc: Sandra Dorizon (Legal Director)`,d:`Tue, 3 Jun 2025 12:28`,s:`RE: Budget updates + details — requests 6–7 of 11 (escalated)`,b:`Hello Luc and Loic,
+
+Long weekend should not have any impact on this detailed description, since we have requested it since the very beginning — when you stopped our construction — and we kept asking every time after.
+
+Please speed up and we should get a final reply from your side within this week.
+
+Mail is cc'd to Legal Director as a reference. I am looking forward to your reply soon.
+
+Best Regards
+Lisa Huyun / Office Manager TCL Europe`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Luc Haté, Loïc Rebours (Unchained), Julie Furlan Polak`,d:`10 Jun 2025`,s:`RE: TCL Home — 'I need to understand the cost' (request 8 of 11)`,b:`Hello Luc,
+
+I need to understand the details and your explanation of the cost before any final invoice can be agreed.
+
+This is now our eighth request for a proper breakdown. Please provide:
+• Line-by-line costs with dates
+• Hours and labour for each item
+• Material quantities
+
+Without this, we cannot agree to the final invoice.
+
+Kind regards,
+Jakub Větrovec`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Lisa Huyun, Julie Furlan Polak`,d:`Wed, 11 Jun 2025 14:29`,s:`Invoice 22025171_TCL EUROPE + TPR Invoice 250100339`,b:`Hi Lisa, Julie,
+
+Please find attached invoice and CE from Mawella for the TCL Home logistics and installations.
+
+Kind regards,
+Jakub Vetrovec
+
+Also:
+TPR Invoice 250100339 — furniture production (Czech Republic)
+Amount: €45,455 HT (due 9 July 2025)
+
+Mawella Invoice 22025171: €23,839 HT (install & transport Praha–Paris)
+
+Unchained final budget V15-B also received.`},
+  {f:`Lisa Huyun <hu.y@tcl.com>`,to:`Henry ZHU, Tony Xia, Ying HU (TCL Management)`,d:`Thu, 12 Jun 2025 12:04`,s:`TCL Home Project Debrief: Meeting Minute — budget formally disputed (request 9 of 11)`,b:`Dear Managers,
+
+Can I please have your opinion and approval to our following action today?
+
+Overall Budget:
+Invoice 1: €47,179.80 | Unchained | PAID
+Invoice 2: €172,701.59 | Unchained | PAID
+Invoice 3: €52,937.56 | Unchained | NOT PAID — DISPUTE
+
+TCL strongly disagrees with Unchained's budget and is still waiting for a detailed explanation to justify Invoice 3. Multiple demands for this breakdown have been made throughout the negotiation.
+
+Project team (Julie, Jakub and I) will follow up.
+
+BR
+Lisa Huyun`},
+  {f:`Sandra Dorizon <sandra.dorizon@tcl.com>`,to:`Jakub VETROVEC, Julie Furlan Polak, TCL Legal team`,d:`23 Jul 2025`,s:`TCL Home — Prise en charge dossier par Direction Juridique`,b:`Dear Julie, Jakub,
+
+I am now taking over the TCL Home correspondence from a legal perspective.
+
+I will consolidate the contractor, landlord and lease threads under Legal.
+
+Could you please forward all relevant correspondence with Unchained, including all invoices, the contracts, and the budget documents?
+
+Kind regards,
+Sandra Dorizon
+Director of Legal and Compliance Europe
+M. +33 (0) 6 45 04 27 27`},
+  {f:`Sandra Dorizon <sandra.dorizon@tcl.com>`,to:`Julie Furlan Polak, Jakub VETROVEC, Tony Xia, Henry ZHU, Ying HU`,d:`Tue, 30 Sep 2025 15:07`,s:`RE: Update Project Debrief — still no breakdown (request 10 of 11)`,b:`Dear Julie,
+
+Thanks. It changes the analysis.
+
+Unchained expressly agreed to lower the budget and the last invoice is up to this amount.
+
+Can I call you to define the next step? I understand that you want to challenge the third invoice. It should be possible but I need to align first.
+
+KR
+
+Sandra Dorizon / Legal Director Europe
+M. +33 (0) 6 45 04 27 27
+
+[TCL Legal records: to date, Unchained has still not been able to provide detailed breakdowns of the construction and purchase costs — months after the first request.]`},
+  {f:`Loïc Rebours <loic@agence-unexpected.com>`,to:`Jakub VETROVEC, Luc Haté, Julie Furlan Polak`,d:`Sat, 11 Oct 2025 10:47`,s:`RE: [External Sender]RE: Facture de solde TCL`,b:`Hello Jakub,
+
+I'm not sure to understand, what do you mean by «we are checking internally for the reasons»?
+
+Thank you,
+LOÏC REBOURS — FOUNDER & CEO
++33 (0)6 25 47 02 50
+
+—
+From: Jakub VETROVEC, Thursday 9 October 2025
+
+Dear Loïc,
+At this moment we are checking internally for the reasons, I have already told you before.
+I will come back to you with an update as soon as possible.
+
+Jakub Vetrovec
+
+[Unchained: 'you are 4 months late right now'. TCL withholds payment pending review of unjustified costs.]`},
+  {f:`Jakub VETROVEC <jakub.vetrovec@tcl.com>`,to:`Julie Furlan Polak`,d:`Wed, 28 Jan 2026 14:13`,s:`RE: TCL NXTHome final invoice discussion and proposal (request 11 of 11)`,b:`WOW!! Very nicely prepared and presented... thank you very much, Julie! 💖
+
+I think you can send it to Sandra...
+
+—
+From: Julie Furlan Polak, Wed 28 Jan 2026 13:17
+
+Hello Sandra,
+
+Please see below the conclusion reached with Jakub:
+
+Unplanned work performed:
+We received a quotation for unplanned works of €39,800 HT. This was carried out WITHOUT our prior approval, both in terms of scope modifications and associated costs.
+
+Agency fees:
+Fees initially quoted at €24,000 HT. Increased to €51,300 HT without prior notice or approval (+€27,300).
+
+Other issues:
+• Planning repeatedly missed; site stopped over budget
+• Repairs only partly done and re-billed each time
+• Agreed paint references ignored → full repaint at TCL cost
+• €300k all-in cap broken → last-minute furniture re-sourcing (TPR, Czech Republic)
+
+TCL position: Reject the €27,300 fee increase. Propose €25,637.56 as full and final settlement.`},
+  {f:`Sandra Dorizon <sandra.dorizon@tcl.com>`,to:`Julie Furlan Polak, Jakub VETROVEC`,d:`Thu, 19 Feb 2026 17:04`,s:`RE: Meeting 24th March Unexpected — préparation`,b:`Hi Julie,
+
+Yes, we will need to align before the meeting. We have one month for that. I will come back to you next week.
+
+KR
+
+Sandra Dorizon / Director of Legal and Compliance Europe
+M. +33 (0) 6 45 04 27 27
+
+[24 March 2026 meeting: Unchained offers a 'commercial gesture' of 10% off its final invoice (~€4,400) in exchange for dropping TCL's settlement proposal. TCL rejects it on the spot — costs remain unjustified.]`},
+  {f:`Easton Kim <Easton.kim@tcl.com>`,to:`Carlos Li, Sandra Dorizon — cc: Julie Furlan Polak, Jakub VETROVEC, Stefan Streit, Romero ELKADDOUM`,d:`Sat, 4 Apr 2026 06:37`,s:`Re: [External Sender]RE: FORMAL NOTICE OF PAYMENT – TCL Showroom Final Invoice`,b:`Dear Carlos,
+
+Thank you for your support — it means a great deal to the team.
+
+We will keep you posted on any developments.
+
+Best regards,
+Easton (Hyundong) Kim — Retail Marketing Director Europe
+
+—
+From: Carlos Li, Saturday 4 April 2026:
+
+Dear Easton and Sandra,
+
+I fully agree with your proposal and insisting initiatives to fight back our interests.
+
+Thanks,
+Carlos
+
+[Context: Against Unchained's Formal Notice of Payment, TCL Legal proposes final amicable figure of €38,000 (up from €32,000). Leadership backs holding the line.]`},
+  {f:`Sandra Dorizon <sandra.dorizon@tcl.com>`,to:`Romero ELKADDOUM, Julie Furlan Polak, Jakub VETROVEC`,d:`Fri, 12 Jun 2026 10:57`,s:`RE: Summons by Unchained`,b:`Dear Julie and Jakub,
+
+We have scheduled a meeting with the lawyer on Monday 15th June to discuss this case.
+
+Would you be available for a Teams meeting at 3:30 pm?
+
+Kind regards,
+
+Sandra Dorizon / Director of Legal and Compliance Europe
+M. +33 (0) 6 45 04 27 27
+
+[Unchained issued a legal summons over the unpaid showroom invoices. TCL engages Arken Avocats and begins assembling the case file.]`},
+  {f:`Sandra Dorizon <sandra.dorizon@tcl.com>`,to:`Romero ELKADDOUM, Julie Furlan Polak, Jakub VETROVEC`,d:`Fri, 12 Jun 2026 10:57`,s:`RE: Summons by Unchained — réunion avocat lundi 15 juin 15h30`,b:`Dear Julie and Jakub,
+
+We have scheduled a meeting with the lawyer on Monday 15th June at 3:30 pm.
+
+Would you be available for a Teams meeting?
+
+Kind regards,
+Sandra Dorizon
+
+[Meeting held: Monday 15 June 2026. Attendees: TCL Legal (S. Dorizon), Romero ELKADDOUM, Arken Avocats (vancauwelaert@arken-avocats.fr), Julie Furlan Polak, Jakub VETROVEC. Summons reviewed. Defence strategy planned.]`},
+  {f:`Romero ELKADDOUM <romero.elkaddoum@tcl.com>`,to:`Jakub VETROVEC, Julie Furlan Polak, Matteo Pacitti, Noemi EL ASMAR, Sandra Dorizon, vancauwelaert@arken-avocats.fr`,d:`Tue, 16 Jun 2026 09:28`,s:`Romero ELKADDOUM shared the folder "Litige TCL-Unchained" with you`,b:`Romero ELKADDOUM invited you to edit a folder.
+
+📁 Litige TCL-Unchained [SharePoint]
+
+A shared case folder has been circulated internally. The dispute is formally in litigation.
+
+Parties: TCL Europe vs. Unchained (formerly Unexpected)
+Lawyer: Arken Avocats (vancauwelaert@arken-avocats.fr)
+Status: Summons received 9 June 2026. Case file opened 16 June 2026.`},
+];
+
 const M = [
   // ---------- BUILD ----------
-  {d:"2024-10-24", cat:"selection", t:"Concept brief & agency sourcing begins", x:"The TCL House Paris brief goes out to candidate agencies (Unexpected/Unchained, Holo, Seven, We Event) to develop showroom concepts for the building."},
-  {d:"2024-11-29", cat:"selection", t:"Project kick-off — Week 1", x:"Weekly reporting starts; the 4 rue Delahaye site is confirmed and the cross-functional team is set up."},
-  {d:"2024-12-13", cat:"contract", t:"Contract wording started", x:"After a three-party meeting, Legal begins drafting the contract; signature is planned for the following week."},
-  {d:"2024-12-20", cat:"selection", t:"Supplier shortlist drawn up", x:"The Week 4 report includes the shortlist of contractors for the reconstruction."},
-  {d:"2025-01-06", cat:"selection", t:"Scoring criteria agreed", x:"A supplier-assessment template and scoring grid is issued ahead of the first selection discussion."},
-  {d:"2025-01-27", cat:"selection", key:true, t:"Contractor selected — Unchained", x:"The final selection result is communicated internally and the agencies are informed. Unchained (the former Unexpected) wins the work."},
-  {d:"2025-01-28", cat:"contract", t:"Agency accepts the assignment", x:"Luc Haté (CEO, Unchained) confirms acceptance of the proposed scope."},
-  {d:"2025-02-11", cat:"contract", t:"Framework agreement circulated", x:"The contract template / framework agreement is shared for review."},
-  {d:"2025-02-12", cat:"schedule", key:true, t:"First schedule issued — opening set for 26 March", x:"Retro-planning v1 lays out the whole job: TCL validation by 25 Feb, production from 26 Feb, equipment install 24 Mar, opening 26 Mar 2025. This is the first agreed deadline against which the slip is measured.", doc:"TCL HOME Retroplanning.pdf"},
-  {d:"2025-02-18", cat:"approval", t:"AC swap raised — Samsung → TCL", x:"Replacing the building's existing Samsung air-con with TCL units is requested. This decision later drives extra wall/partition work — and some of the charges TCL goes on to contest."},
-  {d:"2025-02-20", cat:"contract", key:true, t:"Letter of Intent (LOI) signed", x:"The LOI is signed and a kick-off meeting is held with Julie, Lisa and Jakub."},
-  {d:"2025-02-24", cat:"approval", t:"Demolition & construction plans issued", x:"The ground-floor demolition and construction plan is finalised, clearing the way for production to start."},
-  {d:"2025-02-26", cat:"quote", key:true, t:"First quotation — €47,179.80 excl. VAT", x:"Devis D-2025-16: agency/design fees of €24,000 (creative director, consulting director, architect, project management) plus site set-up and demolition (€23,179.80). Payment terms: 50% deposit on signing the quote, balance on completion.", amount:"€47,179.80 HT", doc:"Devis D-2025-16"},
-  {d:"2025-02-26", cat:"payment", key:true, t:"First invoice — 50% deposit on signature", x:"Invoice F-2025-022632 is issued on the same terms; the balance falls due at the end of the job.", amount:"50% deposit", doc:"Facture F-2025-022632"},
-  {d:"2025-02-26", cat:"schedule", t:"Production starts — demolition begins", x:"Dismantling, demolition and construction begin on the ground floor, on schedule."},
-  {d:"2025-03-07", cat:"approval", t:"TCL air-con product list validated", x:"The list of TCL AC units to install is confirmed, following the Samsung-to-TCL swap."},
-  {d:"2025-03-13", cat:"approval", t:"AC layout proposal agreed", x:"Unit positions and the air-con layout are proposed and reviewed for the ground floor."},
-  {d:"2025-03-18", cat:"approval", t:"Design projections validated (01–04)", x:"Successive 3D space projections for the ground floor are reviewed and signed off through March."},
-  {d:"2025-03-19", cat:"issue", t:"Flooring problem flagged", x:"A flooring specification/approval issue is raised, forcing the floor plan to be reworked."},
-  {d:"2025-03-26", cat:"issue", missed:true, key:true, t:"Original 26 March opening passes — build still underway", x:"The first agreed opening date arrives with the showroom unfinished. Construction, design approvals and the first budget tensions all continue past it."},
-  {d:"2025-04-14", cat:"issue", t:"First consolidated budget — V5", x:"Unchained issues BUDGET TCL V5, its first full cost roll-up across all floors — the document that exposes how far costs have grown.", doc:"BUDGET TCL V5 Unchained.pdf"},
-  {d:"2025-04-15", cat:"dispute", key:true, t:"Detail request #1 — itemised list of all unplanned work", x:"Lisa asks Unchained to deliver a separate, detailed cost list covering every piece of unplanned construction that TCL never requested, so the extra charges can be checked before the budget meeting. This is the first formal demand for a breakdown.", freq:"request 1 of 11"},
-  {d:"2025-04-16", cat:"dispute", t:"Detail request #2 — flooring costs", x:"Julie asks for the flooring ('sol') budget first thing the next morning to close the figure. Unchained returns the detail for the 'subsequent requests' and 'on-site surprises' already started or finished — but not the full itemisation.", freq:"request 2 of 11"},
-  {d:"2025-04-22", cat:"issue", key:true, t:"Budget overrun flagged — unforeseen site costs", x:"A budget review sets a €300k cap for the whole showroom plus a separate ~€37k envelope for 'non prévisible' works tied to defects in the old building. TCL pushes to bring the core figure back toward €250k.", amount:"≈ €37k unforeseen"},
-  {d:"2025-04-25", cat:"dispute", key:true, t:"Detail request #3 — hours, labour, m², materials + pricing contested", x:"Before the negotiation meeting, Lisa insists on the detailed budget 'as precisely requested' for every line item — number of hours, man-hours/labour, square metres, raw-material quantities. The same email challenges specific prices as unreasonable: €3,200 to set up the site for ~100 m² (vs €4,706 for her 1,200 m² office); ~€4,000 for a water-heater hook-up the landlord's technician called trivial and offered to do free; >€2,000 for 4–5 wall holes for the AC and TV.", amount:"€3,200 / €4,000 / €2,000 challenged", freq:"request 3 of 11"},
-  {d:"2025-04-27", cat:"issue", t:"Status meeting — headline budget ~€278k", x:"The project status minute references an overall figure of about €278,000 — well above the original envelope."},
-  {d:"2025-04-28", cat:"dispute", key:true, t:"Site halted over budget — resumption made conditional", x:"TCL's account: the agency stopped work over the budget dispute, and getting it moving again was effectively tied to signing the second contract and paying. Internally, TCL describes this as being put under pressure to accept the inflated budget.", freq:"work stoppage"},
-  {d:"2025-04-29", cat:"quote", key:true, t:"Second quotation — full construction scope", x:"Devis D-2025-20 covers the build itself: flooring €17,693, electricity €37,295.90, ceilings €14,586.22, plumbing €4,600, technical-file management €15,400, plus expanded design fees (€43,400).", doc:"Devis D-2025-20"},
-  {d:"2025-04-29", cat:"contract", t:"Second contract — Showroom Part 2", x:"The 'Showroom 2' framework agreement is sent for Finance and Legal approval and on to DocuSign for Carlos' signature."},
-  {d:"2025-04-29", cat:"schedule", key:true, t:"Schedule revised (V2) — end date moved to 23 May", x:"Retro-planning V2 restates the project as 18 March → 23 May 2025. This is the formal agreement to move the deadline, roughly two months past the original target.", doc:"Rétroplanning TCL V2.xlsx"},
-  {d:"2025-05-06", cat:"payment", key:true, t:"Major payment to Unchained — €207,241.91", x:"An HSBC transfer from TCL Europe clears with value date 6 May. TCL attaches the proof of payment and explicitly asks the agency not to delay the site delivery again.", amount:"€207,241.91", doc:"HSBC payment advice"},
-  {d:"2025-05-12", cat:"dispute", t:"Detail request #4 — cost breakdown + door pricing", x:"As the build closes, TCL again asks for a detailed cost breakdown and queries specific items, e.g. what is included in the €1,761 doors line.", freq:"request 4 of 11"},
-  {d:"2025-05-15", cat:"delivery", t:"Czech crew installs furniture & products (15–20 May)", x:"With the agency unable to deliver furniture on time and within budget, TCL sources a last-minute alternative — furniture maker TPR (Czech Republic) and a Czech installation crew, transporting everything Praha–Paris."},
-  {d:"2025-05-27", cat:"delivery", t:"Opening photos taken", x:"The first photos of the finished showroom are shared internally."},
-  {d:"2025-05-28", cat:"delivery", key:true, t:"Showroom delivered", x:"TCL Home Paris is handed over — the reconstructed house is complete and operating as a brand showroom."},
+  {d:"2024-10-24", ei:0, cat:"selection", t:"Concept brief & agency sourcing begins", x:"The TCL House Paris brief goes out to candidate agencies (Unexpected/Unchained, Holo, Seven, We Event) to develop showroom concepts for the building.",
+    emailName:"RE: TCL House Paris — Brief agences", emailTime:"24 Oct 2024, 09:14"},
+  {d:"2024-11-29", ei:1, cat:"selection", t:"Project kick-off — Week 1", x:"Weekly reporting starts; the 4 rue Delahaye site is confirmed and the cross-functional team is set up.",
+    emailName:"TCL Home — Weekly report W1", emailTime:"29 Nov 2024, 17:02"},
+  {d:"2024-12-13", ei:2, cat:"contract", t:"Contract wording started", x:"After a three-party meeting, Legal begins drafting the contract; signature is planned for the following week.",
+    emailName:"RE: TCL Home — Contrat rédaction", emailTime:"13 Dec 2024, 11:30"},
+  {d:"2024-12-20", ei:3, cat:"selection", t:"Supplier shortlist drawn up", x:"The Week 4 report includes the shortlist of contractors for the reconstruction.",
+    emailName:"TCL Home — Weekly report W4", emailTime:"20 Dec 2024, 16:48"},
+  {d:"2025-01-06", ei:4, cat:"selection", t:"Scoring criteria agreed", x:"A supplier-assessment template and scoring grid is issued ahead of the first selection discussion.",
+    emailName:"TCL Home — Grille de scoring prestataires", emailTime:"6 Jan 2025, 10:05"},
+  {d:"2025-01-27", ei:5, cat:"selection", key:true, t:"Contractor selected — Unchained", x:"The final selection result is communicated internally and the agencies are informed. Unchained (the former Unexpected) wins the work.",
+    emailName:"TCL Home — Résultat sélection prestataire", emailTime:"27 Jan 2025, 14:22"},
+  {d:"2025-01-28", ei:6, cat:"contract", t:"Agency accepts the assignment", x:"Luc Haté (CEO, Unchained) confirms acceptance of the proposed scope.",
+    emailName:"RE: TCL Home Paris — Acceptation mission", emailTime:"28 Jan 2025, 09:47"},
+  {d:"2025-02-11", ei:7, cat:"contract", t:"Framework agreement circulated", x:"The contract template / framework agreement is shared for review.",
+    emailName:"TCL Home — Framework agreement v1", emailTime:"11 Feb 2025, 15:11"},
+  {d:"2025-02-12", ei:8, cat:"schedule", key:true, t:"First schedule issued — opening set for 26 March", x:"Retro-planning v1 lays out the whole job: TCL validation by 25 Feb, production from 26 Feb, equipment install 24 Mar, opening 26 Mar 2025. This is the first agreed deadline against which the slip is measured.",
+    doc:"TCL HOME Retroplanning.pdf", docUrl:"TCL_HOME_Retroplanning.pdf",
+    emailName:"TCL Home — Rétroplanning V1", emailTime:"12 Feb 2025, 10:30"},
+  {d:"2025-02-18", ei:9, cat:"approval", t:"AC swap raised — Samsung → TCL", x:"Replacing the building's existing Samsung air-con with TCL units is requested. This decision later drives extra wall/partition work — and some of the charges TCL goes on to contest.",
+    emailName:"RE: TCL Home — Remplacement clim Samsung → TCL", emailTime:"18 Feb 2025, 11:55"},
+  {d:"2025-02-20", ei:10, cat:"contract", key:true, t:"Letter of Intent (LOI) signed", x:"The LOI is signed and a kick-off meeting is held with Julie, Lisa and Jakub.",
+    emailName:"TCL Home Paris — LOI signé + kick-off", emailTime:"20 Feb 2025, 16:00"},
+  {d:"2025-02-24", ei:11, cat:"approval", t:"Demolition & construction plans issued", x:"The ground-floor demolition and construction plan is finalised, clearing the way for production to start.",
+    emailName:"TCL Home — Plans démolition RDC validés", emailTime:"24 Feb 2025, 09:20"},
+  {d:"2025-02-26", ei:12, cat:"quote", key:true, t:"First quotation — €47,179.80 excl. VAT", x:"Devis D-2025-16: agency/design fees of €24,000 (creative director, consulting director, architect, project management) plus site set-up and demolition (€23,179.80). Payment terms: 50% deposit on signing the quote, balance on completion.",
+    amount:"€47,179.80 HT", doc:"Devis D-2025-16", docUrl:"Devis_D-2025-16.pdf",
+    emailName:"TCL Home — Devis D-2025-16", emailTime:"26 Feb 2025, 14:05"},
+  {d:"2025-02-26", ei:13, cat:"payment", key:true, t:"First invoice — 50% deposit on signature", x:"Invoice F-2025-022632 is issued on the same terms; the balance falls due at the end of the job.",
+    amount:"50% deposit", doc:"Facture F-2025-022632", docUrl:"Facture_F-2025-022632.pdf",
+    emailName:"TCL Home — Facture F-2025-022632 (acompte 50%)", emailTime:"26 Feb 2025, 14:10"},
+  {d:"2025-02-26", ei:14, cat:"schedule", t:"Production starts — demolition begins", x:"Dismantling, demolition and construction begin on the ground floor, on schedule.",
+    emailName:"TCL Home — Démarrage chantier", emailTime:"26 Feb 2025, 08:00"},
+  {d:"2025-03-07", ei:15, cat:"approval", t:"TCL air-con product list validated", x:"The list of TCL AC units to install is confirmed, following the Samsung-to-TCL swap.",
+    emailName:"RE: TCL Home — Liste produits clim TCL validée", emailTime:"7 Mar 2025, 10:18"},
+  {d:"2025-03-13", ei:16, cat:"approval", t:"AC layout proposal agreed", x:"Unit positions and the air-con layout are proposed and reviewed for the ground floor.",
+    emailName:"TCL Home — Proposition implantation clim RDC", emailTime:"13 Mar 2025, 14:40"},
+  {d:"2025-03-18", ei:17, cat:"approval", t:"Design projections validated (01–04)", x:"Successive 3D space projections for the ground floor are reviewed and signed off through March.",
+    emailName:"TCL Home — Projections 3D RDC 01-04 validées", emailTime:"18 Mar 2025, 16:55"},
+  {d:"2025-03-19", ei:18, cat:"issue", t:"Flooring problem flagged", x:"A flooring specification/approval issue is raised, forcing the floor plan to be reworked.",
+    emailName:"RE: TCL Home — Problème sol RDC", emailTime:"19 Mar 2025, 09:03"},
+  {d:"2025-03-26", ei:19, cat:"issue", missed:true, key:true, t:"Original 26 March opening passes — build still underway", x:"The first agreed opening date arrives with the showroom unfinished. Construction, design approvals and the first budget tensions all continue past it.",
+    emailName:"TCL Home — Suivi chantier (deadline dépassée)", emailTime:"26 Mar 2025, 17:30"},
+  {d:"2025-04-14", ei:20, cat:"issue", t:"First consolidated budget — V5", x:"Unchained issues BUDGET TCL V5, its first full cost roll-up across all floors — the document that exposes how far costs have grown.",
+    doc:"BUDGET TCL V5 Unchained.pdf", docUrl:"BUDGET_TCL_V5_Unchained.pdf",
+    emailName:"TCL Home — Budget V5 (Unchained)", emailTime:"14 Apr 2025, 11:00"},
+  {d:"2025-04-15", ei:21, cat:"dispute", key:true, t:"Detail request #1 — itemised list of all unplanned work", x:"Lisa asks Unchained to deliver a separate, detailed cost list covering every piece of unplanned construction that TCL never requested, so the extra charges can be checked before the budget meeting. This is the first formal demand for a breakdown.",
+    freq:"request 1 of 11",
+    emailName:"RE: TCL Home — Demande détail travaux non prévus", emailTime:"15 Apr 2025, 09:47"},
+  {d:"2025-04-16", ei:22, cat:"dispute", t:"Detail request #2 — flooring costs", x:"Julie asks for the flooring ('sol') budget first thing the next morning to close the figure. Unchained returns the detail for the 'subsequent requests' and 'on-site surprises' already started or finished — but not the full itemisation.",
+    freq:"request 2 of 11",
+    emailName:"RE: TCL Home — Détail budget sol", emailTime:"16 Apr 2025, 08:15"},
+  {d:"2025-04-22", ei:23, cat:"issue", key:true, t:"Budget overrun flagged — unforeseen site costs", x:"A budget review sets a €300k cap for the whole showroom plus a separate ~€37k envelope for 'non prévisible' works tied to defects in the old building. TCL pushes to bring the core figure back toward €250k.",
+    amount:"≈ €37k unforeseen",
+    emailName:"TCL Home — Revue budget : dépassement travaux imprévus", emailTime:"22 Apr 2025, 15:20"},
+  {d:"2025-04-25", ei:24, cat:"dispute", key:true, t:"Detail request #3 — hours, labour, m², materials + pricing contested", x:"Before the negotiation meeting, Lisa insists on the detailed budget 'as precisely requested' for every line item — number of hours, man-hours/labour, square metres, raw-material quantities. The same email challenges specific prices as unreasonable: €3,200 to set up the site for ~100 m² (vs €4,706 for her 1,200 m² office); ~€4,000 for a water-heater hook-up the landlord's technician called trivial and offered to do free; >€2,000 for 4–5 wall holes for the AC and TV.",
+    amount:"€3,200 / €4,000 / €2,000 challenged", freq:"request 3 of 11",
+    emailName:"RE: TCL Home — Détail budget ligne par ligne (avant réunion)", emailTime:"25 Apr 2025, 10:02"},
+  {d:"2025-04-27", ei:25, cat:"issue", t:"Status meeting — headline budget ~€278k", x:"The project status minute references an overall figure of about €278,000 — well above the original envelope.",
+    emailName:"TCL Home — CR réunion statut budget 278k", emailTime:"27 Apr 2025, 18:00"},
+  {d:"2025-04-28", ei:26, cat:"dispute", key:true, t:"Site halted over budget — resumption made conditional", x:"TCL's account: the agency stopped work over the budget dispute, and getting it moving again was effectively tied to signing the second contract and paying. Internally, TCL describes this as being put under pressure to accept the inflated budget.",
+    freq:"work stoppage",
+    emailName:"RE: TCL Home — Arrêt chantier / condition reprise", emailTime:"28 Apr 2025, 14:33"},
+  {d:"2025-04-29", ei:27, cat:"quote", key:true, t:"Second quotation — full construction scope", x:"Devis D-2025-20 covers the build itself: flooring €17,693, electricity €37,295.90, ceilings €14,586.22, plumbing €4,600, technical-file management €15,400, plus expanded design fees (€43,400).",
+    doc:"Devis D-2025-20", docUrl:"Devis_D-2025-20.pdf",
+    emailName:"TCL Home — Devis D-2025-20 (périmètre construction)", emailTime:"29 Apr 2025, 09:15"},
+  {d:"2025-04-29", ei:28, cat:"contract", t:"Second contract — Showroom Part 2", x:"The 'Showroom 2' framework agreement is sent for Finance and Legal approval and on to DocuSign for Carlos' signature.",
+    emailName:"TCL Home — Contrat Showroom Part 2 → DocuSign", emailTime:"29 Apr 2025, 10:00"},
+  {d:"2025-04-29", ei:29, cat:"schedule", key:true, t:"Schedule revised (V2) — end date moved to 23 May", x:"Retro-planning V2 restates the project as 18 March → 23 May 2025. This is the formal agreement to move the deadline, roughly two months past the original target.",
+    doc:"Rétroplanning TCL V2.xlsx", docUrl:"Retroplanning_TCL_V2.xlsx",
+    emailName:"TCL Home — Rétroplanning V2 (fin 23 mai)", emailTime:"29 Apr 2025, 11:30"},
+  {d:"2025-05-06", ei:30, cat:"payment", key:true, t:"Major payment to Unchained — €207,241.91", x:"An HSBC transfer from TCL Europe clears with value date 6 May. TCL attaches the proof of payment and explicitly asks the agency not to delay the site delivery again.",
+    amount:"€207,241.91", doc:"HSBC payment advice", docUrl:"HSBC_payment_advice_20250506.pdf",
+    emailName:"TCL Home — Virement HSBC €207 241,91 + avis paiement", emailTime:"6 May 2025, 16:45"},
+  {d:"2025-05-12", ei:31, cat:"dispute", t:"Detail request #4 — cost breakdown + door pricing", x:"As the build closes, TCL again asks for a detailed cost breakdown and queries specific items, e.g. what is included in the €1,761 doors line.",
+    freq:"request 4 of 11",
+    emailName:"RE: TCL Home — Détail budget + ligne portes", emailTime:"12 May 2025, 08:50"},
+  {d:"2025-05-15", ei:32, cat:"delivery", t:"Czech crew installs furniture & products (15–20 May)", x:"With the agency unable to deliver furniture on time and within budget, TCL sources a last-minute alternative — furniture maker TPR (Czech Republic) and a Czech installation crew, transporting everything Praha–Paris.",
+    emailName:"TCL Home — Installation mobilier équipe tchèque (15-20 mai)", emailTime:"15 May 2025, 07:00"},
+  {d:"2025-05-27", ei:33, cat:"delivery", t:"Opening photos taken", x:"The first photos of the finished showroom are shared internally.",
+    emailName:"TCL Home Paris — Photos ouverture showroom", emailTime:"27 May 2025, 19:22"},
+  {d:"2025-05-28", ei:34, cat:"delivery", key:true, t:"Showroom delivered", x:"TCL Home Paris is handed over — the reconstructed house is complete and operating as a brand showroom.",
+    emailName:"TCL Home Paris — Livraison showroom ✓", emailTime:"28 May 2025, 14:00"},
 
   // ---------- CLOSE-OUT & DISPUTE ----------
-  {d:"2025-05-29", cat:"dispute", t:"Detail request #5 — renewed before sign-off", x:"TCL renews the demand for the detailed budget before agreeing the final figure.", freq:"request 5 of 11"},
-  {d:"2025-06-03", cat:"dispute", key:true, t:"Detail requests #6–7 — escalated, legal cc'd", x:"By 3 June TCL has still had no feedback on the detailed expense description. Lisa stresses it is not about a few token lines but the whole budget, notes the breakdown has been asked for repeatedly since the work stoppage, copies the legal director, and demands a final reply within the week.", freq:"requests 6–7 of 11"},
-  {d:"2025-06-10", cat:"dispute", t:"Detail request #8 — 'I need to understand the cost'", x:"Jakub tells the agency he needs the details and a proper explanation of the cost before any final invoice can be agreed.", freq:"request 8 of 11"},
-  {d:"2025-06-09", cat:"payment", t:"Closing invoices issued", x:"The replacement furniture and logistics are invoiced: TPR (CZ) €45,455 (due 9 Jul) and showroom install & transport €23,839. Unchained's own final budget lands as V15-B.", amount:"€45,455 + €23,839", doc:"FAV 250100339 · 22025171"},
-  {d:"2025-06-12", cat:"dispute", key:true, t:"Detail request #9 — budget formally disputed", x:"At the debrief the project team records that it 'strongly disagrees' with Unchained's budget and is still waiting for the detailed explanation to justify the invoice, noting it has made multiple demands for this throughout the negotiation.", freq:"request 9 of 11"},
-  {d:"2025-07-23", cat:"dispute", t:"Legal takes over the file", x:"TCL's Legal Director (Sandra Dorizon) steps into the correspondence and consolidates the contractor, landlord and lease threads under Legal."},
-  {d:"2025-09-30", cat:"dispute", key:true, t:"Detail request #10 — legal: still no breakdown", x:"TCL Legal records that, to date, Unchained has still not been able to provide detailed breakdowns of the construction and purchase costs — months after the first request.", freq:"request 10 of 11"},
-  {d:"2025-10-03", cat:"dispute", key:true, t:"Final balance withheld — agency chases payment", x:"Unchained presses for its final balance ('you are 4 months late right now'). TCL withholds payment, replying only that it is 'checking internally for the reasons' — i.e. the still-unjustified costs.", doc:"Facture de solde TCL"},
-  {d:"2026-01-28", cat:"dispute", key:true, t:"TCL formalises its grievances to Legal", x:"Julie and Jakub set out TCL's full position for Legal, point by point: €39,800 of unplanned work done without approval; agency fees raised from €24,000 to €51,300 without notice; planning repeatedly missed and the site stopped over budget; repairs only partly done and re-billed each time; agreed paint references ignored, forcing a full repaint; the €300k all-in cap broken, forcing last-minute furniture re-sourcing. TCL proposes to reject the €27,300 fee increase and pay €25,637.56.", amount:"claim €44,114.63 HT", ledger:true, freq:"request 11 of 11"},
-  {d:"2026-03-24", cat:"dispute", key:true, t:"Agency offers 10% discount — TCL rejects it", x:"At a meeting on 24 March, Unchained offers a 'commercial gesture' of 10% off its final invoice (about €4,400 off the ~€44k claim) in exchange for dropping TCL's reasonable-settlement proposal. TCL rejects it on the spot as unacceptable, given the costs are still unjustified.", amount:"10% off · rejected"},
-  {d:"2026-04-03", cat:"dispute", key:true, t:"Formal notice of payment — TCL counter-offers €38,000", x:"Against a 'Formal Notice of Payment' on the final invoice, TCL Legal proposes a last amicable figure of €38,000 (raised from an earlier €32,000, and about €10k below the agency's number). Leadership backs holding the line; Legal notes it did not find the agency's explanations honest.", amount:"€32k → €38k offer"},
-  {d:"2026-06-09", cat:"dispute", key:true, t:"Summons from Unchained", x:"Unchained issues a legal summons over the unpaid showroom invoices. TCL engages a law firm and begins assembling the case file.", freq:"litigation"},
-  {d:"2026-06-15", cat:"dispute", t:"Lawyer meeting on the case", x:"TCL Legal meets the lawyer to review the summons and plan the defence."},
-  {d:"2026-06-16", cat:"dispute", t:"'Litige TCL-Unchained' case file opened", x:"A shared case folder is circulated internally; the dispute is formally in litigation."},
+  {d:"2025-05-29", ei:35, cat:"dispute", t:"Detail request #5 — renewed before sign-off", x:"TCL renews the demand for the detailed budget before agreeing the final figure.",
+    freq:"request 5 of 11",
+    emailName:"RE: TCL Home — Détail budget avant validation solde", emailTime:"29 May 2025, 09:12"},
+  {d:"2025-06-03", ei:36, cat:"dispute", key:true, t:"Detail requests #6–7 — escalated, legal cc'd", x:"By 3 June TCL has still had no feedback on the detailed expense description. Lisa stresses it is not about a few token lines but the whole budget, notes the breakdown has been asked for repeatedly since the work stoppage, copies the legal director, and demands a final reply within the week.",
+    freq:"requests 6–7 of 11",
+    emailName:"RE: TCL Home — Escalade détail budget (DG juridique en cc)", emailTime:"3 Jun 2025, 11:04"},
+  {d:"2025-06-10", ei:37, cat:"dispute", t:"Detail request #8 — 'I need to understand the cost'", x:"Jakub tells the agency he needs the details and a proper explanation of the cost before any final invoice can be agreed.",
+    freq:"request 8 of 11",
+    emailName:"RE: TCL Home — Explication détaillée des coûts requise", emailTime:"10 Jun 2025, 10:33"},
+  {d:"2025-06-09", ei:38, cat:"payment", t:"Closing invoices issued", x:"The replacement furniture and logistics are invoiced: TPR (CZ) €45,455 (due 9 Jul) and showroom install & transport €23,839. Unchained's own final budget lands as V15-B.",
+    amount:"€45,455 + €23,839", doc:"FAV 250100339 · 22025171", docUrl:"FAV_250100339_22025171.pdf",
+    emailName:"TCL Home — Factures de clôture (TPR + transport)", emailTime:"9 Jun 2025, 14:20"},
+  {d:"2025-06-12", ei:39, cat:"dispute", key:true, t:"Detail request #9 — budget formally disputed", x:"At the debrief the project team records that it 'strongly disagrees' with Unchained's budget and is still waiting for the detailed explanation to justify the invoice, noting it has made multiple demands for this throughout the negotiation.",
+    freq:"request 9 of 11",
+    emailName:"TCL Home — CR débrief : désaccord formel budget Unchained", emailTime:"12 Jun 2025, 16:00"},
+  {d:"2025-07-23", ei:40, cat:"dispute", t:"Legal takes over the file", x:"TCL's Legal Director (Sandra Dorizon) steps into the correspondence and consolidates the contractor, landlord and lease threads under Legal.",
+    emailName:"TCL Home — Transfert dossier à Direction Juridique (S. Dorizon)", emailTime:"23 Jul 2025, 09:00"},
+  {d:"2025-09-30", ei:41, cat:"dispute", key:true, t:"Detail request #10 — legal: still no breakdown", x:"TCL Legal records that, to date, Unchained has still not been able to provide detailed breakdowns of the construction and purchase costs — months after the first request.",
+    freq:"request 10 of 11",
+    emailName:"RE: TCL Home — Juridique : toujours aucun détail chiffré", emailTime:"30 Sep 2025, 11:18"},
+  {d:"2025-10-03", ei:42, cat:"dispute", key:true, t:"Final balance withheld — agency chases payment", x:"Unchained presses for its final balance ('you are 4 months late right now'). TCL withholds payment, replying only that it is 'checking internally for the reasons' — i.e. the still-unjustified costs.",
+    doc:"Facture de solde TCL", docUrl:"Facture_de_solde_TCL.pdf",
+    emailName:"RE: TCL Home — Relance solde / retenue paiement TCL", emailTime:"3 Oct 2025, 14:55"},
+  {d:"2026-01-28", ei:43, cat:"dispute", key:true, t:"TCL formalises its grievances to Legal", x:"Julie and Jakub set out TCL's full position for Legal, point by point: €39,800 of unplanned work done without approval; agency fees raised from €24,000 to €51,300 without notice; planning repeatedly missed and the site stopped over budget; repairs only partly done and re-billed each time; agreed paint references ignored, forcing a full repaint; the €300k all-in cap broken, forcing last-minute furniture re-sourcing. TCL proposes to reject the €27,300 fee increase and pay €25,637.56.",
+    amount:"claim €44,114.63 HT", ledger:true, freq:"request 11 of 11",
+    emailName:"TCL Home — Position TCL formalisée au juridique (Julie + Jakub)", emailTime:"28 Jan 2026, 10:30"},
+  {d:"2026-03-24", ei:44, cat:"dispute", key:true, t:"Agency offers 10% discount — TCL rejects it", x:"At a meeting on 24 March, Unchained offers a 'commercial gesture' of 10% off its final invoice (about €4,400 off the ~€44k claim) in exchange for dropping TCL's reasonable-settlement proposal. TCL rejects it on the spot as unacceptable, given the costs are still unjustified.",
+    amount:"10% off · rejected",
+    emailName:"TCL Home — CR réunion 24/03 : offre remise 10% refusée", emailTime:"24 Mar 2026, 18:00"},
+  {d:"2026-04-03", ei:45, cat:"dispute", key:true, t:"Formal notice of payment — TCL counter-offers €38,000", x:"Against a 'Formal Notice of Payment' on the final invoice, TCL Legal proposes a last amicable figure of €38,000 (raised from an earlier €32,000, and about €10k below the agency's number). Leadership backs holding the line; Legal notes it did not find the agency's explanations honest.",
+    amount:"€32k → €38k offer",
+    emailName:"RE: TCL Home — Mise en demeure / contre-offre TCL €38 000", emailTime:"3 Apr 2026, 15:42"},
+  {d:"2026-06-09", ei:46, cat:"dispute", key:true, t:"Summons from Unchained", x:"Unchained issues a legal summons over the unpaid showroom invoices. TCL engages a law firm and begins assembling the case file.",
+    freq:"litigation",
+    emailName:"TCL Home — Assignation Unchained reçue", emailTime:"9 Jun 2026, 09:05"},
+  {d:"2026-06-15", ei:47, cat:"dispute", t:"Lawyer meeting on the case", x:"TCL Legal meets the lawyer to review the summons and plan the defence.",
+    emailName:"TCL Home — CR réunion avocat (stratégie défense)", emailTime:"15 Jun 2026, 17:30"},
+  {d:"2026-06-16", ei:48, cat:"dispute", t:"'Litige TCL-Unchained' case file opened", x:"A shared case folder is circulated internally; the dispute is formally in litigation.",
+    emailName:"TCL Home — Ouverture dossier 'Litige TCL-Unchained'", emailTime:"16 Jun 2026, 10:00"},
 ];
 
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -322,7 +1020,7 @@ function scrollToActive(cat){
 const tl=document.getElementById("timeline");
 function render(){
   tl.innerHTML="";
-  let lastMonth=null,lastPhase=null;
+  let lastMonth=null,lastPhase=null,idx=0;
   M.forEach(m=>{
     const f=fmt(m.d), ph=phaseOf(m.d);
     if(ph!==lastPhase){
@@ -346,22 +1044,61 @@ function render(){
     const it=document.createElement("div");
     it.className="item "+m.cat+(m.key?" key":"")+(m.missed?" missed":"")+(show?"":" dimmed");
     const col=CATS[m.cat].color;
+    const emailBtn = (typeof m.ei==='number') ?
+      '<button class="icon-btn" aria-label="Voir email source" onclick="openEmail('+m.ei+')" title="Voir l\'email source">✉️</button>' : '';
+
     it.innerHTML=
       '<div class="when"><b>'+f.day+'</b>'+f.mon+' <i>'+f.y+'</i></div>'+
       '<div class="body">'+
         '<span class="node" style="border-color:'+col+'"></span>'+
         '<span class="cat" style="color:'+col+'">'+CATS[m.cat].label+'</span>'+
         '<h4>'+m.t+'</h4><p>'+m.x+'</p>'+
-        ((m.amount||m.doc||m.freq)?'<div class="meta">'+
-            (m.amount?'<span class="amount'+(m.cat==="dispute"?" ox":"")+'">'+m.amount+'</span>':'')+
-            (m.freq?'<span class="freq">'+m.freq+'</span>':'')+
-            (m.doc?'<span class="doc">'+m.doc+'</span>':'')+
-          '</div>':'')+
+        '<div class="meta">'+
+          (m.amount?'<span class="amount'+(m.cat==="dispute"?" ox":"")+'">'+m.amount+'</span>':'')+
+          (m.freq?'<span class="freq">'+m.freq+'</span>':'')+
+          (m.doc?'<span class="doc">'+m.doc+'</span>':'')+
+          emailBtn+
+        '</div>'+
       '</div>';
     tl.appendChild(it);
+    idx++;
   });
 }
+
+
+function openEmail(idx){
+  const e = EMAIL_DATA[idx];
+  if(!e) return;
+  document.getElementById('mSubject').textContent = e.s;
+  document.getElementById('mFrom').textContent = e.f;
+  document.getElementById('mTo').textContent = e.to;
+  document.getElementById('mDate').textContent = e.d;
+  document.getElementById('mBody').textContent = e.b;
+  document.getElementById('emailModal').classList.add('open');
+}
+function closeModal(ev){
+  if(ev.target===document.getElementById('emailModal')) document.getElementById('emailModal').classList.remove('open');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('emailModal').classList.remove('open'); });
+
+
+
 render();
 </script>
+
+<div class="modal-bg" id="emailModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-subject" id="mSubject"></div>
+      <div class="modal-meta">
+        <b>From</b><span id="mFrom"></span>
+        <b>To</b><span id="mTo"></span>
+        <b>Date</b><span id="mDate"></span>
+      </div>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+    <div class="modal-foot"><button class="modal-close" onclick="document.getElementById('emailModal').classList.remove('open')">Close</button></div>
+  </div>
+</div>
 </body>
 </html>
